@@ -1,0 +1,101 @@
+---
+layout: default
+title: Photography Portfolio
+---
+
+<div class="hero-section">
+    <h1>{{ site.photographer_name }}</h1>
+    <p class="bio">{{ site.photographer_bio }}</p>
+</div>
+
+<div class="gallery-container">
+    {% assign image_files = site.static_files | where: "image", true %}
+    {% assign photo_files = image_files | where_exp: "item", "item.path contains '/assets/images/photos/'" %}
+    
+    {% for image in photo_files %}
+        {% if image.extname == '.jpg' or image.extname == '.jpeg' or image.extname == '.png' or image.extname == '.JPG' or image.extname == '.JPEG' or image.extname == '.PNG' %}
+            <div class="gallery-item">
+                <img src="{{ image.path | relative_url }}" 
+                     alt="Photography by {{ site.photographer_name }}"
+                     loading="lazy"
+                     onclick="openModal('{{ image.path | relative_url }}')">
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Modal for full-size images -->
+<div id="imageModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+    <div class="modal-nav">
+        <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+        <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+    </div>
+</div>
+
+<script>
+let currentImageIndex = 0;
+let images = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all gallery images
+    const galleryImages = document.querySelectorAll('.gallery-item img');
+    images = Array.from(galleryImages).map(img => img.src);
+});
+
+function openModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    
+    currentImageIndex = images.indexOf(imageSrc);
+    modal.style.display = 'block';
+    modalImage.src = imageSrc;
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function changeImage(direction) {
+    currentImageIndex += direction;
+    
+    if (currentImageIndex >= images.length) {
+        currentImageIndex = 0;
+    } else if (currentImageIndex < 0) {
+        currentImageIndex = images.length - 1;
+    }
+    
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = images[currentImageIndex];
+}
+
+// Close modal when clicking outside the image
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(event) {
+    const modal = document.getElementById('imageModal');
+    if (modal.style.display === 'block') {
+        switch(event.key) {
+            case 'Escape':
+                closeModal();
+                break;
+            case 'ArrowLeft':
+                changeImage(-1);
+                break;
+            case 'ArrowRight':
+                changeImage(1);
+                break;
+        }
+    }
+});
+</script>
