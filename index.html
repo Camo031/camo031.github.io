@@ -6,7 +6,7 @@ layout: null
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Photography Portfolio</title>
+<title>Camden Lethcoe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Lightbox2 -->
@@ -23,14 +23,14 @@ footer { color:#bbb; padding:30px 20px 50px;}
 </style>
 </head>
 <body>
-<h1>My Photography Portfolio</h1>
+<h1>Camden Lethcoe</h1>
 <div class="gallery">
   {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-  {% for photo in photos %}
-    <a class="tile" href="{{ photo.path }}" data-lightbox="set1" data-title="{{ photo.name }}">
-      <img src="{{ photo.path }}" alt="{{ photo.name }}" loading="lazy">
-    </a>
-  {% endfor %}
+{% for photo in photos %}
+  <a href="{{ photo.path }}" data-lightbox="portfolio" data-title="{{ photo.name }}">
+    <img src="{{ photo.path }}" alt="{{ photo.name }}" style="width:200px; margin:10px;">
+  </a>
+{% endfor %}
 </div>
 <footer>© <span id="y"></span> My Name</footer>
 <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
