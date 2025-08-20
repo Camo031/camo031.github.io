@@ -63,7 +63,7 @@ footer {
   {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
   {% for photo in photos %}
     <a href="{{ photo.path }}" data-lightbox="portfolio" data-title="{{ photo.name }}">
-      <img src="{{ photo.path }}" alt="{{ photo.name }}">
+      <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}" alt="{{ photo.name }}">
     </a>
   {% endfor %}
 </div>
