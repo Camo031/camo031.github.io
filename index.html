@@ -1,69 +1,27 @@
----
-layout: null
----
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Camden Lethcoe</title>
+  <title>Lightbox Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Lightbox2 (official CDNJS) -->
+  <!-- Lightbox2 -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      margin: 20px;
-      font-weight: 300;
-    }
-    .gallery {
-      width: 90%;
-      max-width: 1200px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 10px;
-    }
-    .gallery img {
-      width: 100%;
-      border-radius: 6px;
-      transition: transform .25s ease;
-      cursor: pointer;
-    }
-    .gallery img:hover {
-      transform: scale(1.03);
-    }
-    footer {
-      color: #bbb;
-      padding: 30px 20px 50px;
-    }
-  </style>
 </head>
-<body>
-  <h1>Camden Lethcoe</h1>
+<body style="background:#111; color:white; font-family:sans-serif; text-align:center">
 
-  <div class="gallery">
-    {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-    {% for photo in photos %}
-      <a href="{{ photo.path }}" data-lightbox="portfolio" data-title="{{ photo.name }}">
-        <img src="{{ photo.path }}" alt="{{ photo.name }}">
-      </a>
-    {% endfor %}
-  </div>
+  <h1>Lightbox2 Test</h1>
 
-  <footer>© <span id="y"></span> Camden Lethcoe</footer>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
+  <p>If you click the image below, it should open in a lightbox with navigation.</p>
+
+  <a href="https://placekitten.com/1200/800" data-lightbox="portfolio" data-title="Kitten 1">
+    <img src="https://placekitten.com/400/267" alt="Kitten 1" style="width:200px; border-radius:6px;">
+  </a>
+
+  <a href="https://placekitten.com/1201/801" data-lightbox="portfolio" data-title="Kitten 2">
+    <img src="https://placekitten.com/401/267" alt="Kitten 2" style="width:200px; border-radius:6px;">
+  </a>
+
 </body>
 </html>
