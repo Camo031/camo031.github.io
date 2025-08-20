@@ -5,65 +5,72 @@ layout: null
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Camden Lethcoe</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Camden Lethcoe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Lightbox2 (official CDNJS) -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
+<!-- Lightbox2 -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      margin: 20px;
-      font-weight: 300;
-    }
-    .gallery {
-      width: 90%;
-      max-width: 1200px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 10px;
-    }
-    .gallery img {
-      width: 100%;
-      border-radius: 6px;
-      transition: transform .25s ease;
-      cursor: pointer;
-    }
-    .gallery img:hover {
-      transform: scale(1.03);
-    }
-    footer {
-      color: #bbb;
-      padding: 30px 20px 50px;
-    }
-  </style>
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+h1 {
+  margin: 20px;
+  font-weight: 300;
+}
+
+/* Masonry-style gallery using columns */
+.gallery {
+  column-count: 4; /* adjust number of columns for desktop */
+  column-gap: 0;   /* no space between columns */
+  width: 100%;
+  max-width: 1200px;
+}
+
+.gallery a {
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid; /* prevents images from splitting across columns */
+  margin: 0;            /* remove spacing between images */
+}
+
+.gallery img {
+  width: 100%;
+  display: block;
+  border-radius: 0; /* straight corners */
+  margin: 0;        /* remove spacing */
+}
+
+footer {
+  color: #bbb;
+  padding: 30px 20px 50px;
+}
+</style>
 </head>
 <body>
-  <h1>Camden Lethcoe</h1>
+<h1>Camden Lethcoe</h1>
 
-  <div class="gallery">
-    {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-    {% for photo in photos %}
-      <a href="{{ photo.path }}" data-lightbox="portfolio" data-title="{{ photo.name }}">
-        <img src="{{ photo.path }}" alt="{{ photo.name }}">
-      </a>
-    {% endfor %}
-  </div>
+<div class="gallery">
+  {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
+  {% for photo in photos %}
+    <a href="{{ photo.path }}" data-lightbox="portfolio" data-title="{{ photo.name }}">
+      <img src="{{ photo.path }}" alt="{{ photo.name }}">
+    </a>
+  {% endfor %}
+</div>
 
-  <footer>© <span id="y"></span> Camden Lethcoe</footer>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
+<footer>© <span id="y"></span> Camden Lethcoe</footer>
+<script>
+document.getElementById('y').textContent = new Date().getFullYear();
+</script>
 </body>
 </html>
