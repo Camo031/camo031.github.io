@@ -57,6 +57,35 @@ footer {
   color: #bbb;
   padding: 30px 20px 50px;
 }
+
+#contact-container {
+  margin: 20px 0;
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+#contact-button {
+  background: #444;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  transition: background 0.25s;
+  display: inline-block;
+}
+
+#contact-button:hover {
+  background: #666;
+}
+
+#email {
+  display: inline-block;
+  margin-left: 10px;
+  color: #fff;
+  transition: opacity 0.5s ease;
+}
+
 </style>
 </head>
 <body>
@@ -72,8 +101,23 @@ footer {
 </div>
 
 <footer>© <span id="y"></span> Camden Lethcoe</footer>
+
+<div id="contact-container">
+  <span id="contact-button">contact me</span>
+  <span id="email" style="opacity:0;">testplaceholder@swag.com</span>
+</div>
+
 <script>
 document.getElementById('y').textContent = new Date().getFullYear();
+
+const button = document.getElementById('contact-button');
+  const email = document.getElementById('email');
+
+  button.addEventListener('click', () => {
+    email.style.opacity = 1;       // fade in email
+    button.style.display = 'none'; // hide "Contact Me" text
+  });
+  
 </script>
 </body>
 </html>
