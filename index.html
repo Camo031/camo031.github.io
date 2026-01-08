@@ -76,7 +76,13 @@ footer {
 </style>
 </head>
 <body>
-<h1>Camden Lethcoe</h1>
+<h1>
+  <span>Camden Lethcoe</span>
+  <span class="separator">|</span>
+  <a href="https://instagram.com/ensembleofthings" target="_blank">Instagram</a>
+  <span class="separator">|</span>
+  <a href="mailto:cam@lethcoe.pics">Email</a>
+</h1>
 
 <div class="gallery">
   {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
