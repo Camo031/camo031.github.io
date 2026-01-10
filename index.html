@@ -13,16 +13,15 @@ layout: null
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
 
-<!-- Matter.js -->
+<!-- Matter.js (only used in fun mode) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
 <style>
 body {
   margin: 0;
+  font-family: Arial, sans-serif;
   background: #111;
   color: #fff;
-  font-family: Arial, sans-serif;
-  overflow: hidden;
 }
 
 h1 {
@@ -33,18 +32,19 @@ h1 {
   display: flex;
   align-items: center;
   gap: 20px;
-  position: relative;
-  z-index: 10;
 }
 
-h1 a {
+h1 a,
+#return-btn {
   font-size: 14px;
   font-family: Arial, sans-serif;
   color: #bbb;
   text-decoration: none;
+  cursor: pointer;
 }
 
-h1 a:hover {
+h1 a:hover,
+#return-btn:hover {
   color: #fff;
 }
 
@@ -53,36 +53,66 @@ h1 a:hover {
   color: #666;
 }
 
-#physics-gallery {
-  position: absolute;
-  top: 120px;
-  left: 0;
-  right: 0;
-  bottom: 140px;
+/* ORIGINAL GRID */
+.gallery {
+  column-count: 4;
+  column-gap: 0;
+  width: 100%;
+  max-width: 1200px;
 }
 
-footer {
-  position: absolute;
-  bottom: 70px;
+.gallery a {
+  display: inline-block;
   width: 100%;
-  text-align: center;
+  break-inside: avoid;
+}
+
+.gallery img {
+  width: 100%;
+  display: block;
+}
+
+/* Physics container */
+#physics-gallery {
+  position: fixed;
+  inset: 120px 0 140px 0;
+  display: none;
+  z-index: 1;
+}
+
+/* Footer + buttons */
+footer {
   color: #bbb;
+  padding: 30px 20px 10px;
+  text-align: center;
+}
+
+#fun-btn {
   font-size: 12px;
+  color: #bbb;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+#fun-btn:hover {
+  color: #fff;
 }
 
 #contact-container {
-  position: absolute;
-  bottom: 30px;
-  width: 100%;
   text-align: center;
   font-family: "Times New Roman", serif;
   font-size: 8pt;
+  margin-bottom: 40px;
   cursor: pointer;
 }
 
 #email {
   opacity: 0;
   transition: opacity 0.5s ease;
+}
+
+.hidden {
+  display: none !important;
 }
 </style>
 </head>
@@ -95,11 +125,27 @@ footer {
   <a href="https://instagram.com/ensembleofthings" target="_blank">Instagram</a>
   <span class="separator">|</span>
   <a href="mailto:cam@lethcoe.pics">Email</a>
+  <span class="separator hidden" id="return-sep">|</span>
+  <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
 
+<!-- STATIC GRID (DEFAULT MODE) -->
+<div class="gallery" id="static-gallery">
+  {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
+  {% for photo in photos %}
+    <a href="{{ photo.path }}" data-lightbox="portfolio" data-title="{{ photo.name }}">
+      <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}" alt="{{ photo.name }}">
+    </a>
+  {% endfor %}
+</div>
+
+<!-- PHYSICS MODE -->
 <div id="physics-gallery"></div>
 
-<footer>© <span id="y"></span> Camden Lethcoe</footer>
+<footer>
+  <div id="fun-btn">click for fun</div>
+  © <span id="y"></span> Camden Lethcoe
+</footer>
 
 <div id="contact-container">
   <span id="contact-button">contact me</span>
@@ -109,155 +155,147 @@ footer {
 <script>
 document.getElementById("y").textContent = new Date().getFullYear();
 
-const button = document.getElementById("contact-button");
-const email = document.getElementById("email");
-
-button.addEventListener("click", () => {
-  email.style.opacity = 1;
-  button.style.display = "none";
-});
+document.getElementById("contact-button").onclick = () => {
+  document.getElementById("email").style.opacity = 1;
+  document.getElementById("contact-button").style.display = "none";
+};
 </script>
 
 <script>
-const {
-  Engine,
-  Render,
-  World,
-  Bodies,
-  Mouse,
-  MouseConstraint,
-  Composite,
-  Events
-} = Matter;
+/* ========= FUN MODE ========= */
+
+let engine, render, mouseConstraint;
+const funBtn = document.getElementById("fun-btn");
+const returnBtn = document.getElementById("return-btn");
+const returnSep = document.getElementById("return-sep");
+const staticGallery = document.getElementById("static-gallery");
+const physicsGallery = document.getElementById("physics-gallery");
 
 const isMobile = window.matchMedia("(max-width: 768px)").matches;
-const container = document.getElementById("physics-gallery");
 
-const engine = Engine.create();
-engine.gravity.y = 0;
+funBtn.onclick = () => {
+  staticGallery.classList.add("hidden");
+  funBtn.classList.add("hidden");
+  physicsGallery.style.display = "block";
+  returnBtn.classList.remove("hidden");
+  returnSep.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  initPhysics();
+};
 
-const render = Render.create({
-  element: container,
-  engine: engine,
-  options: {
-    width: window.innerWidth,
-    height: isMobile
-      ? window.innerHeight - 160
-      : window.innerHeight - 260,
-    background: "#111",
-    wireframes: false,
-    pixelRatio: window.devicePixelRatio
-  }
-});
+returnBtn.onclick = () => {
+  Matter.Render.stop(render);
+  Matter.World.clear(engine.world);
+  Matter.Engine.clear(engine);
+  render.canvas.remove();
+  physicsGallery.style.display = "none";
+  staticGallery.classList.remove("hidden");
+  funBtn.classList.remove("hidden");
+  returnBtn.classList.add("hidden");
+  returnSep.classList.add("hidden");
+  document.body.style.overflow = "";
+};
 
-Render.run(render);
-Engine.run(engine);
+/* Init physics only when needed */
+function initPhysics() {
+  const {
+    Engine, Render, World, Bodies, Mouse, MouseConstraint, Composite, Events
+  } = Matter;
 
-/* Walls */
-function addWalls() {
-  const w = render.options.width;
-  const h = render.options.height;
+  engine = Engine.create();
+  engine.gravity.y = 0;
 
-  World.add(engine.world, [
-    Bodies.rectangle(w / 2, -30, w, 60, { isStatic: true }),
-    Bodies.rectangle(w / 2, h + 30, w, 60, { isStatic: true }),
-    Bodies.rectangle(-30, h / 2, 60, h, { isStatic: true }),
-    Bodies.rectangle(w + 30, h / 2, 60, h, { isStatic: true })
-  ]);
-}
-addWalls();
-
-/* Mouse / Touch */
-const mouse = Mouse.create(render.canvas);
-const mouseConstraint = MouseConstraint.create(engine, {
-  mouse,
-  constraint: {
-    stiffness: isMobile ? 0.28 : 0.15,
-    damping: isMobile ? 0.25 : 0.05,
-    render: { visible: false }
-  }
-});
-World.add(engine.world, mouseConstraint);
-
-/* Photos via Jekyll */
-const photos = [
-{% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% for photo in photos %}
-  {
-    full: "{{ photo.path }}",
-    thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
-    title: "{{ photo.name }}"
-  },
-{% endfor %}
-];
-
-/* Create bubbles */
-photos.forEach(photo => {
-  const size = isMobile
-    ? 130 + Math.random() * 40
-    : 90 + Math.random() * 50;
-
-  const body = Bodies.circle(
-    Math.random() * render.options.width,
-    Math.random() * render.options.height,
-    size / 2,
-    {
-      restitution: isMobile ? 0.6 : 0.9,
-      frictionAir: isMobile ? 0.08 : 0.03,
-      density: isMobile ? 0.002 : 0.001,
-      render: {
-        sprite: {
-          texture: photo.thumb,
-          xScale: size / 400,
-          yScale: size / 400
-        }
-      }
-    }
-  );
-
-  body.photo = photo;
-  World.add(engine.world, body);
-});
-
-/* Prevent lightbox during drag */
-let wasDragged = false;
-
-Events.on(mouseConstraint, "startdrag", () => {
-  wasDragged = true;
-});
-
-Events.on(mouseConstraint, "enddrag", () => {
-  setTimeout(() => (wasDragged = false), 60);
-});
-
-/* Click → Lightbox */
-render.canvas.addEventListener("mouseup", () => {
-  if (wasDragged) return;
-
-  const bodies = Composite.allBodies(engine.world);
-  bodies.forEach(b => {
-    if (b.photo && Matter.Bounds.contains(b.bounds, mouse.position)) {
-      const a = document.createElement("a");
-      a.href = b.photo.full;
-      a.setAttribute("data-lightbox", "portfolio");
-      a.setAttribute("data-title", b.photo.title);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+  render = Render.create({
+    element: physicsGallery,
+    engine,
+    options: {
+      width: window.innerWidth,
+      height: isMobile ? window.innerHeight - 180 : window.innerHeight - 260,
+      background: "#111",
+      wireframes: false,
+      pixelRatio: window.devicePixelRatio
     }
   });
-});
 
-/* Resize */
-window.addEventListener("resize", () => {
-  render.canvas.width = window.innerWidth;
-  render.canvas.height = isMobile
-    ? window.innerHeight - 160
-    : window.innerHeight - 260;
+  Render.run(render);
+  Engine.run(engine);
 
-  render.options.width = render.canvas.width;
-  render.options.height = render.canvas.height;
-});
+  // Walls
+  const w = render.options.width;
+  const h = render.options.height;
+  World.add(engine.world, [
+    Bodies.rectangle(w/2, -30, w, 60, { isStatic:true }),
+    Bodies.rectangle(w/2, h+30, w, 60, { isStatic:true }),
+    Bodies.rectangle(-30, h/2, 60, h, { isStatic:true }),
+    Bodies.rectangle(w+30, h/2, 60, h, { isStatic:true })
+  ]);
+
+  // Drag
+  const mouse = Mouse.create(render.canvas);
+  mouseConstraint = MouseConstraint.create(engine, {
+    mouse,
+    constraint: {
+      stiffness: isMobile ? 0.28 : 0.15,
+      damping: isMobile ? 0.25 : 0.05,
+      render: { visible:false }
+    }
+  });
+  World.add(engine.world, mouseConstraint);
+
+  // Photos
+  const photos = [
+  {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
+  {% for photo in photos %}
+    {
+      full: "{{ photo.path }}",
+      thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
+      title: "{{ photo.name }}"
+    },
+  {% endfor %}
+  ];
+
+  photos.forEach(p => {
+    const size = isMobile ? 130 + Math.random()*40 : 90 + Math.random()*50;
+    const body = Bodies.circle(
+      Math.random()*w,
+      Math.random()*h,
+      size/2,
+      {
+        restitution: isMobile ? 0.6 : 0.9,
+        frictionAir: isMobile ? 0.08 : 0.03,
+        render: {
+          sprite: {
+            texture: p.thumb,
+            xScale: size/400,
+            yScale: size/400
+          }
+        }
+      }
+    );
+    body.photo = p;
+    World.add(engine.world, body);
+  });
+
+  // Click → lightbox (no drag)
+  let dragged = false;
+  Events.on(mouseConstraint, "startdrag", () => dragged = true);
+  Events.on(mouseConstraint, "enddrag", () => setTimeout(()=>dragged=false,60));
+
+  render.canvas.addEventListener("mouseup", () => {
+    if (dragged) return;
+    Composite.allBodies(engine.world).forEach(b => {
+      if (b.photo && Matter.Bounds.contains(b.bounds, mouse.position)) {
+        const a = document.createElement("a");
+        a.href = b.photo.full;
+        a.setAttribute("data-lightbox", "portfolio");
+        a.setAttribute("data-title", b.photo.title);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    });
+  });
+}
 </script>
 
 </body>
