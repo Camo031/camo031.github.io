@@ -71,6 +71,24 @@ h1 a:hover,
 .gallery img {
   width: 100%;
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.gallery a {
+  position: relative;
+}
+
+.gallery a::after {
+  content: 'Camden Lethcoe';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  pointer-events: none;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
 /* Physics container */
@@ -160,6 +178,30 @@ document.getElementById("contact-button").onclick = () => {
   document.getElementById("email").style.opacity = 1;
   document.getElementById("contact-button").style.display = "none";
 };
+
+// Disable right-click on images
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Disable common save shortcuts
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Disable drag on images
+document.addEventListener('dragstart', (e) => {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    return false;
+  }
+});
 </script>
 
 <script>
@@ -276,6 +318,19 @@ function initPhysics() {
     body.photo = p;
     World.add(engine.world, body);
   });
+
+  // Give a few random images initial velocity on desktop for visual cue
+  if (!isMobile) {
+    const allBodies = Composite.allBodies(engine.world).filter(b => b.photo);
+    const numToAnimate = Math.min(3, allBodies.length);
+    for (let i = 0; i < numToAnimate; i++) {
+      const randomBody = allBodies[Math.floor(Math.random() * allBodies.length)];
+      Matter.Body.setVelocity(randomBody, {
+        x: (Math.random() - 0.5) * 8,
+        y: (Math.random() - 0.5) * 8
+      });
+    }
+  }
 
   // Click → lightbox (no drag)
   let dragged = false;
