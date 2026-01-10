@@ -13,25 +13,6 @@ layout: null
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
 
-<style>
-/* Watermark on lightbox images */
-.lb-image {
-  position: relative;
-}
-
-.lb-image::after {
-  content: 'Camden Lethcoe';
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-  pointer-events: none;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.9);
-  z-index: 9999;
-}
-</style>
-
 <!-- Matter.js (only used in fun mode) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
@@ -79,6 +60,12 @@ h1 a:hover,
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .gallery {
+    column-count: 2;
+  }
 }
 
 .gallery a {
@@ -335,7 +322,11 @@ function initPhysics() {
       }
     );
     body.photo = p;
-    World.add(engine.world, body);
+    
+    // On mobile, only add every 3rd photo to reduce clutter
+    if (!isMobile || Math.random() > 0.66) {
+      World.add(engine.world, body);
+    }
   });
 
   // Give a few random images initial velocity on desktop for visual cue
