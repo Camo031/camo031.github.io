@@ -185,12 +185,10 @@ document.getElementById("contact-button").onclick = () => {
   document.getElementById("contact-button").style.display = "none";
 };
 
-// Disable right-click on images
+// Disable right-click on entire website
 document.addEventListener('contextmenu', (e) => {
-  if (e.target.tagName === 'IMG') {
-    e.preventDefault();
-    return false;
-  }
+  e.preventDefault();
+  return false;
 });
 
 // Disable common save shortcuts
