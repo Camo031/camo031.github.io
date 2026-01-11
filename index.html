@@ -42,7 +42,7 @@ h1 a, #return-btn {
 
 .separator { color: #666; }
 
-/* ==== FIXED MASONRY GRID ==== */
+/* Masonry grid (no gaps) */
 .gallery {
   column-count: 4;
   column-gap: 0;
@@ -68,7 +68,7 @@ h1 a, #return-btn {
 
 .hidden { display: none !important; }
 
-/* ==== PHYSICS ==== */
+/* Physics canvas */
 #physics-gallery {
   position: fixed;
   top: 120px;
@@ -111,7 +111,7 @@ footer {
   <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
 
-<!-- STATIC GRID -->
+<!-- Static grid -->
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
 {% for photo in photos %}
@@ -121,7 +121,7 @@ footer {
 {% endfor %}
 </div>
 
-<!-- FUN MODE -->
+<!-- Fun mode -->
 <div id="physics-gallery"></div>
 
 <footer>
@@ -146,12 +146,11 @@ document.getElementById("contact-button").onclick = () => {
 
 const {
   Engine, Render, World, Bodies, Body,
-  Mouse, MouseConstraint, Composite, Events, Bounds
+  Mouse, MouseConstraint, Composite, Events
 } = Matter;
 
 const isMobile = window.matchMedia("(max-width:768px)").matches;
 let engine, render, mouseConstraint;
-let longPressTimer;
 
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
@@ -186,7 +185,8 @@ function teardownPhysics() {
 
 function initPhysics() {
   engine = Engine.create();
-  engine.gravity.y = 0.15;
+  engine.gravity.x = 0;
+  engine.gravity.y = 0;
 
   const headerHeight = document.querySelector("h1").offsetHeight;
 
@@ -208,6 +208,7 @@ function initPhysics() {
   const w = render.options.width;
   const h = render.options.height;
 
+  // Walls
   World.add(engine.world, [
     Bodies.rectangle(w/2, -40, w, 80, { isStatic:true }),
     Bodies.rectangle(w/2, h+40, w, 80, { isStatic:true }),
@@ -215,6 +216,7 @@ function initPhysics() {
     Bodies.rectangle(w+40, h/2, 80, h, { isStatic:true })
   ]);
 
+  // Drag
   const mouse = Mouse.create(render.canvas);
   mouseConstraint = MouseConstraint.create(engine, {
     mouse,
@@ -226,10 +228,10 @@ function initPhysics() {
   });
   World.add(engine.world, mouseConstraint);
 
+  // Photos
   const photos = [
   {% for photo in photos %}
     {
-      full: "{{ photo.path }}",
       thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}"
     },
   {% endfor %}
@@ -239,14 +241,14 @@ function initPhysics() {
     const current = Composite.allBodies(engine.world).filter(b => b.photo).length;
     if (isMobile && current >= 10) return;
 
-    const size = isMobile ? 55 + Math.random()*20 : 90 + Math.random()*40;
+    const size = isMobile ? 50 + Math.random()*20 : 90 + Math.random()*40;
 
     const body = Bodies.circle(
       w*0.25 + Math.random()*w*0.5,
       h*0.25 + Math.random()*h*0.5,
       size/2,
       {
-        restitution: 0.85,
+        restitution: 0.9,
         frictionAir: 0.08,
         render: {
           sprite: {
@@ -257,11 +259,11 @@ function initPhysics() {
         }
       }
     );
-    body.photo = p;
+    body.photo = true;
     World.add(engine.world, body);
   });
 
-  /* Gentle idle + mild repel */
+  /* Gentle random drift + mild repel */
   Events.on(engine, "beforeUpdate", () => {
     const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
     bodies.forEach(a => {
@@ -277,58 +279,14 @@ function initPhysics() {
           });
         }
       });
+
+      // slow random drift (no bias)
       Body.applyForce(a, a.position, {
-        x: (Math.random() - 0.5) * 0.00003,
-        y: (Math.random() - 0.5) * 0.00003
+        x: (Math.random() - 0.5) * 0.00002,
+        y: (Math.random() - 0.5) * 0.00002
       });
     });
   });
-
-  /* Tap shuffle */
-  render.canvas.addEventListener("click", () => {
-    Composite.allBodies(engine.world).forEach(b => {
-      if (b.photo) {
-        Body.setVelocity(b, {
-          x: (Math.random() - 0.5) * 10,
-          y: (Math.random() - 0.5) * 10
-        });
-      }
-    });
-  });
-
-  /* Long press / click to open */
-  const openAt = pos => {
-    Composite.allBodies(engine.world).some(b => {
-      if (b.photo && Bounds.contains(b.bounds, pos)) {
-        const a = document.createElement("a");
-        a.href = b.photo.full;
-        a.setAttribute("data-lightbox","portfolio");
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        return true;
-      }
-    });
-  };
-
-  const startPress = pos => {
-    longPressTimer = setTimeout(() => openAt(pos), 550);
-  };
-  const cancelPress = () => clearTimeout(longPressTimer);
-
-  render.canvas.addEventListener("mousedown", () => startPress(mouse.position));
-  render.canvas.addEventListener("touchstart", () => startPress(mouse.position));
-  ["mouseup","mouseleave","touchend","touchcancel"].forEach(e =>
-    render.canvas.addEventListener(e, cancelPress)
-  );
-
-  /* Mobile tilt (heavily damped) */
-  if (isMobile && window.DeviceOrientationEvent) {
-    window.addEventListener("deviceorientation", e => {
-      engine.gravity.x = Math.max(-0.4, Math.min(0.4, e.gamma / 60));
-      engine.gravity.y = Math.max(-0.4, Math.min(0.4, e.beta / 60));
-    });
-  }
 }
 </script>
 
