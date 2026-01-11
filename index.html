@@ -79,7 +79,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   bottom: 0;
   display: none;
   z-index: 100;
-  border: 1px solid #111; /* invisible border matching background */
+  border: 1px solid #111; /* invisible border */
 }
 
 #physics-gallery canvas {
@@ -167,7 +167,7 @@ footer {
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
 {% for photo in photos %}
-  <a href="{{ photo.path }}" data-name="{{ photo.name }}">
+  <a href="{{ photo.path }}" data-lightbox="portfolio" data-name="{{ photo.name }}">
     <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
   </a>
 {% endfor %}
@@ -231,7 +231,7 @@ bottom.forEach(el => gallery.appendChild(el));
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
 const staticGalleryEl = document.getElementById("static-gallery");
-const physicsGallery = document.getElementById("physics-gallery");
+const physicsGalleryEl = document.getElementById("physics-gallery");
 
 let engine, world, bodies = [];
 
@@ -240,8 +240,8 @@ funBtn.onclick = () => startFunMode();
 returnBtn.onclick = () => {
   if(engine) Matter.World.clear(world);
   bodies = [];
-  physicsGallery.innerHTML = "";
-  physicsGallery.style.display = "none";
+  physicsGalleryEl.innerHTML = "";
+  physicsGalleryEl.style.display = "none";
   staticGalleryEl.classList.remove("hidden");
   funBtn.classList.remove("hidden");
   returnBtn.classList.add("hidden");
@@ -252,7 +252,7 @@ function startFunMode() {
   staticGalleryEl.classList.add("hidden");
   funBtn.classList.add("hidden");
   returnBtn.classList.remove("hidden");
-  physicsGallery.style.display = "block";
+  physicsGalleryEl.style.display = "block";
   document.body.style.overflow = "hidden";
 
   const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
@@ -264,7 +264,7 @@ function startFunMode() {
   const h = window.innerHeight - document.querySelector("h1").offsetHeight - 10;
 
   const render = Render.create({
-    element: physicsGallery,
+    element: physicsGalleryEl,
     engine: engine,
     options: { width: w, height: h, wireframes: false, background: "#111" }
   });
@@ -292,7 +292,7 @@ function startFunMode() {
   // Load images
   let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
 
-  // Reduce number of images on mobile
+  // Reduce number on mobile
   if(window.innerWidth <= 768) imgElements = imgElements.slice(0, Math.ceil(imgElements.length/3));
 
   bodies = [];
