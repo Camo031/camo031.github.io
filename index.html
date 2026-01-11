@@ -9,8 +9,11 @@ layout: null
 <title>Camden Lethcoe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Lightbox -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
+
+<!-- Matter.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
 <style>
@@ -29,160 +32,107 @@ h1 {
   gap: 20px;
   flex-wrap: wrap;
   align-items: baseline;
+  position: relative;
+  z-index: 10;
 }
 
-h1 a, #about-link {
+h1 a, #return-btn {
   font-size: 13px;
   color: #999;
   text-decoration: none;
   cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-weight: 300;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
 }
 
-h1 a:hover, #about-link:hover { color: #fff; }
+h1 a:hover, #return-btn:hover { color: #fff; }
 .separator { color: #666; font-size: 10px; }
 
-.gallery {
-  column-count: 4;
-  column-gap: 0;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.gallery a {
-  display: block;
-  break-inside: avoid;
-}
-
-.gallery img {
-  width: 100%;
-  display: block;
-}
+.gallery { column-count: 4; column-gap: 0; max-width: 1200px; margin: 0 auto; }
+.gallery a { display: block; width: 100%; break-inside: avoid; }
+.gallery img { width: 100%; display: block; }
 
 @media (max-width: 768px) {
   h1 { font-size: 32px; }
   .gallery { column-count: 2; }
 }
 
-/* About overlay */
-#about-page {
-  display: none;
+.hidden { display: none !important; }
+
+#physics-gallery {
   position: fixed;
-  inset: 0;
-  background: #000;
+  top: 120px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
   z-index: 100;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
 }
 
+#physics-gallery canvas {
+  pointer-events: auto !important;
+  cursor: grab;
+}
+
+#physics-gallery canvas:active {
+  cursor: grabbing;
+}
+
+#about-page { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
 #about-page.active { display: flex; }
 
-#about-return {
-  font-size: 13px;
-  color: #999;
-  cursor: pointer;
-  margin-bottom: 60px;
-}
-
+#about-return { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; color: #999; cursor: pointer; margin-bottom: 60px; font-weight: 300; letter-spacing: 0.3px; transition: color 0.2s ease; }
 #about-return:hover { color: #fff; }
 
-#about-text {
-  font-family: Georgia, serif;
-  font-size: 20px;
-  max-width: 600px;
-  text-align: center;
-  line-height: 1.8;
+#about-text { font-family: Georgia, serif; color: #fff; font-size: 20px; line-height: 1.8; max-width: 600px; text-align: center; }
+@media (max-width: 768px) { #about-text { font-size: 16px; padding: 0 20px; } }
+
+.mobile-fun-header { display: none; position: fixed; top: 0; left: 0; right: 0; background: #111; padding: 20px; z-index: 10; text-align: center; }
+.mobile-fun-header span { font-size: 14px; color: #bbb; cursor: pointer; font-family: Arial, sans-serif; }
+
+@media (max-width: 768px) {
+  h1.fun-mode { display: none; }
+  .mobile-fun-header.active { display: block; }
+  #physics-gallery.mobile-active { top: 60px; }
 }
 
-/* Fun button */
-#fun-trigger {
-  display: none;
-  text-align: center;
-  margin: 40px 0 10px;
-  font-size: 12px;
-  cursor: pointer;
-  color: #bbb;
-}
-
-/* Fun mode */
-#fun-mode {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 200;
-}
-
-#fun-top {
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  cursor: pointer;
-}
-
-footer {
-  text-align: center;
-  color: #bbb;
-  padding: 20px;
-  font-size: 12px;
-}
+footer { text-align: center; color: #bbb; padding: 20px; }
+footer.hidden-copyright { display: none; }
+#fun-btn { font-size: 12px; cursor: pointer; }
+#contact-container { font-family: "Times New Roman", serif; font-size: 8pt; text-align: center; margin-bottom: 30px; }
 </style>
 </head>
 
 <body>
+<div class="mobile-fun-header" id="mobile-header">
+  <span id="mobile-return-btn">return to normalcy</span>
+</div>
 
-<h1>
+<h1 id="main-header">
   <span>Camden Lethcoe</span>
   <span class="separator">|</span>
   <a href="https://instagram.com/ensembleofthings" target="_blank">instagram</a>
   <span class="separator">|</span>
   <a href="mailto:cam@lethcoe.pics">email</a>
   <span class="separator">|</span>
-  <span id="about-link">about me</span>
+  <a id="about-link">about me</a>
+  <span class="separator hidden" id="return-sep">|</span>
+  <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
 
-<div class="gallery" id="gallery">
+<div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% assign special_names = "000986310012_result,000986320014_result" | split: "," %}
-{% assign normal = "" | split: "" %}
-{% assign bottom = "" | split: "" %}
-
-{% for photo in photos %}
-  {% assign is_special = false %}
-  {% for s in special_names %}
-    {% if photo.name contains s %}
-      {% assign is_special = true %}
-    {% endif %}
-  {% endfor %}
-  {% if is_special %}
-    {% assign bottom = bottom | push: photo %}
-  {% else %}
-    {% assign normal = normal | push: photo %}
-  {% endif %}
-{% endfor %}
-
-{% assign normal = normal | shuffle %}
-
-{% for photo in normal %}
-<a href="{{ photo.path }}" data-lightbox="portfolio">
-  <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
-</a>
-{% endfor %}
-{% for photo in bottom %}
-<a href="{{ photo.path }}" data-lightbox="portfolio">
-  <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
-</a>
+{% assign shuffled_photos = photos | sort: "name" %}
+{% for photo in shuffled_photos %}
+  <a href="{{ photo.path }}" data-lightbox="portfolio" data-order="{{ forloop.index }}">
+    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
+  </a>
 {% endfor %}
 </div>
 
-<div id="fun-trigger">click for fun</div>
-
-<footer>
-  © <span id="y"></span> Camden Lethcoe
-</footer>
+<div id="physics-gallery"></div>
 
 <div id="about-page">
   <div id="about-return">return</div>
@@ -191,121 +141,165 @@ footer {
   </div>
 </div>
 
-<div id="fun-mode">
-  <div id="fun-top">return to normalcy</div>
+<footer id="footer">
+  <div id="fun-btn">click for fun</div>
+  © <span id="y"></span> Camden Lethcoe
+</footer>
+
+<div id="contact-container">
+  <span id="contact-button">contact me</span>
+  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
 </div>
 
 <script>
-/* year */
 document.getElementById("y").textContent = new Date().getFullYear();
+document.getElementById("contact-button").onclick = () => { document.getElementById("email").style.opacity = 1; };
+document.addEventListener('contextmenu', e => { if(e.target.tagName==='IMG'||e.target.closest('.gallery')) e.preventDefault(); });
+document.addEventListener('dragstart', e => { if(e.target.tagName==='IMG') e.preventDefault(); });
 
-/* about */
+const gallery = document.getElementById("static-gallery");
+Array.from(gallery.children).sort(()=>Math.random()-0.5).forEach(c=>gallery.appendChild(c));
+
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
-document.getElementById("about-return").onclick = () => {
-  aboutPage.classList.remove("active");
-  document.body.style.overflow = "";
-};
-aboutLink.onclick = () => {
-  aboutPage.classList.add("active");
-  document.body.style.overflow = "hidden";
-};
+const aboutReturn = document.getElementById("about-return");
+aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow="hidden"; };
+aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow=""; };
+</script>
 
-/* show fun button near bottom */
-const funTrigger = document.getElementById("fun-trigger");
-window.addEventListener("scroll", () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-    funTrigger.style.display = "block";
-  }
-});
+<script>
+/* ================= ORIGINAL WORKING FUN MODE ================= */
+const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Composite } = Matter;
 
-/* subtle color clustering */
-window.addEventListener("load", () => {
-  const items = Array.from(document.querySelectorAll("#gallery a"));
-  const buckets = [[],[],[],[],[]];
+const funBtn = document.getElementById("fun-btn");
+const returnBtn = document.getElementById("return-btn");
+const mobileReturnBtn = document.getElementById("mobile-return-btn");
+const returnSep = document.getElementById("return-sep");
+const staticGallery = document.getElementById("static-gallery");
+const physicsGallery = document.getElementById("physics-gallery");
+const mainHeader = document.getElementById("main-header");
+const mobileHeader = document.getElementById("mobile-header");
+const footer = document.getElementById("footer");
 
-  items.forEach(el => {
-    const img = el.querySelector("img");
-    const c = document.createElement("canvas");
-    const ctx = c.getContext("2d");
-    c.width = 20; c.height = 20;
-    ctx.drawImage(img, 0, 0, 20, 20);
-    const d = ctx.getImageData(0,0,20,20).data;
-    let sum = 0;
-    for(let i=0;i<d.length;i+=4){
-      sum += (d[i] + d[i+1] + d[i+2]) / 3;
-    }
-    const avg = sum / (d.length/4);
-    const bucket = Math.min(4, Math.floor(avg / 51));
-    buckets[bucket].push(el);
-  });
-
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = "";
-  buckets.forEach(b => b.sort(()=>Math.random()-0.5).forEach(el => gallery.appendChild(el)));
-});
-
-/* fun mode physics */
-const funMode = document.getElementById("fun-mode");
-const funTop = document.getElementById("fun-top");
 let engine, render;
 
-funTrigger.onclick = () => {
-  document.body.style.overflow = "hidden";
-  funMode.style.display = "block";
+funBtn.onclick = () => {
+  staticGallery.classList.add("hidden");
+  funBtn.classList.add("hidden");
+  footer.classList.add("hidden-copyright");
+  physicsGallery.style.display = "block";
+  document.body.style.overflow="hidden";
 
-  engine = Matter.Engine.create();
+  if(window.innerWidth <= 768){
+    mainHeader.classList.add("fun-mode");
+    mobileHeader.classList.add("active");
+    physicsGallery.classList.add("mobile-active");
+  } else {
+    returnBtn.classList.remove("hidden");
+    returnSep.classList.remove("hidden");
+  }
+
+  initPhysics();
+};
+
+returnBtn.onclick = teardownPhysics;
+mobileReturnBtn.onclick = teardownPhysics;
+
+function teardownPhysics(){
+  Render.stop(render);
+  World.clear(engine.world);
+  Engine.clear(engine);
+  render.canvas.remove();
+  physicsGallery.style.display="none";
+  physicsGallery.classList.remove("mobile-active");
+  staticGallery.classList.remove("hidden");
+  funBtn.classList.remove("hidden");
+  footer.classList.remove("hidden-copyright");
+  returnBtn.classList.add("hidden");
+  returnSep.classList.add("hidden");
+  mainHeader.classList.remove("fun-mode");
+  mobileHeader.classList.remove("active");
+  document.body.style.overflow="";
+}
+
+function initPhysics(){
+  engine = Engine.create();
+  engine.gravity.x = 0;
   engine.gravity.y = 0;
 
-  render = Matter.Render.create({
-    element: funMode,
+  const w = window.innerWidth;
+  const h = window.innerHeight - (window.innerWidth <= 768 ? 60 : document.querySelector("h1").offsetHeight);
+
+  render = Render.create({
+    element: physicsGallery,
     engine,
-    options: {
-      width: window.innerWidth,
-      height: window.innerHeight - 60,
-      background: "#000",
-      wireframes: false
-    }
+    options: { width: w, height: h, background: "#111", wireframes: false, pixelRatio: window.devicePixelRatio }
   });
+  Render.run(render);
+  Engine.run(engine);
 
-  Matter.Render.run(render);
-  Matter.Engine.run(engine);
-
-  const mouse = Matter.Mouse.create(render.canvas);
-  const mc = Matter.MouseConstraint.create(engine, { mouse });
-  Matter.World.add(engine.world, mc);
-
-  Matter.World.add(engine.world, [
-    Matter.Bodies.rectangle(window.innerWidth/2, -50, window.innerWidth, 100, { isStatic:true }),
-    Matter.Bodies.rectangle(window.innerWidth/2, window.innerHeight, window.innerWidth, 100, { isStatic:true }),
-    Matter.Bodies.rectangle(-50, window.innerHeight/2, 100, window.innerHeight, { isStatic:true }),
-    Matter.Bodies.rectangle(window.innerWidth+50, window.innerHeight/2, 100, window.innerHeight, { isStatic:true })
+  // Walls
+  World.add(engine.world, [
+    Bodies.rectangle(w/2,-40,w,80,{isStatic:true}),
+    Bodies.rectangle(w/2,h+40,w,80,{isStatic:true}),
+    Bodies.rectangle(-40,h/2,80,h,{isStatic:true}),
+    Bodies.rectangle(w+40,h/2,80,h,{isStatic:true})
   ]);
 
-  document.querySelectorAll("#gallery img").forEach(img => {
-    const size = 90;
-    const body = Matter.Bodies.circle(
-      Math.random()*window.innerWidth,
-      Math.random()*window.innerHeight,
+  // Mouse drag
+  const mouse = Mouse.create(render.canvas);
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse: mouse,
+    constraint: { stiffness: 0.8, damping: 0.5, render: { visible: false } }
+  });
+  World.add(engine.world, mouseConstraint);
+  render.mouse = mouse;
+
+  // Photos
+  const photos = [
+  {% for photo in photos %}
+    { thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}" },
+  {% endfor %}
+  ];
+
+  photos.forEach(p => {
+    const size = window.innerWidth <= 768 ? 50 + Math.random()*20 : 90 + Math.random()*40;
+    const body = Bodies.circle(
+      w*0.25 + Math.random()*w*0.5,
+      h*0.25 + Math.random()*h*0.5,
       size/2,
       {
         restitution: 0.9,
-        frictionAir: 0.02,
-        render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
+        frictionAir: 0.08,
+        friction: 0.1,
+        density: 0.001,
+        render: { sprite: { texture: p.thumb, xScale: size/400, yScale: size/400 } }
       }
     );
-    Matter.World.add(engine.world, body);
+    body.photo = true;
+    World.add(engine.world, body);
   });
-};
 
-funTop.onclick = () => {
-  Matter.Render.stop(render);
-  Matter.Engine.clear(engine);
-  render.canvas.remove();
-  funMode.style.display = "none";
-  document.body.style.overflow = "";
-};
+  // Drift + mutual attraction
+  Events.on(engine,"beforeUpdate",()=>{
+    const bodies = Composite.allBodies(engine.world).filter(b=>b.photo);
+    bodies.forEach(a=>{
+      bodies.forEach(b=>{
+        if(a===b) return;
+        const dx = b.position.x - a.position.x;
+        const dy = b.position.y - a.position.y;
+        const dist = Math.hypot(dx,dy);
+        if(dist>0){
+          const strength = 0.000008;
+          const force = strength/(dist*dist);
+          Body.applyForce(a,a.position,{x:(dx/dist)*force, y:(dy/dist)*force});
+          if(dist<100) Body.applyForce(a,a.position,{x:-dx*0.0000008, y:-dy*0.0000008});
+        }
+      });
+      Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
+    });
+  });
+}
 </script>
-
 </body>
 </html>
