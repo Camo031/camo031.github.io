@@ -16,9 +16,6 @@ layout: null
 <!-- Matter.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
-<!-- Three.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
 <style>
 body {
   margin: 0;
@@ -92,95 +89,6 @@ h1 a:hover, #return-btn:hover {
   right: 0;
   display: none;
   z-index: 1;
-}
-
-/* Even more fun button inside physics area */
-#even-more-fun-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  color: #999;
-  cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.3px;
-  transition: color 0.2s ease;
-  z-index: 0;
-  display: none;
-}
-
-#even-more-fun-btn:hover {
-  color: #fff;
-}
-
-#even-more-fun-btn.active {
-  display: block;
-}
-
-/* Globe mode */
-#globe-mode {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #000;
-  z-index: 200;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-#globe-mode.active {
-  display: flex;
-}
-
-#globe-container {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#globe-return {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  color: #999;
-  cursor: pointer;
-  margin-bottom: 40px;
-  font-weight: 300;
-  letter-spacing: 0.3px;
-  transition: color 0.2s ease;
-}
-
-#globe-return:hover {
-  color: #fff;
-}
-
-footer {
-  text-align: center;
-  color: #bbb;
-  padding: 20px;
-}
-
-footer.hidden-copyright {
-  display: none;
-}
-
-#fun-btn {
-  font-size: 12px;
-  cursor: pointer;
-}
-
-#contact-container {
-  font-family: "Times New Roman", serif;
-  font-size: 8pt;
-  text-align: center;
-  margin-bottom: 30px;
 }
 
 /* About Me Page */
@@ -280,6 +188,28 @@ img {
     top: 60px;
   }
 }
+
+footer {
+  text-align: center;
+  color: #bbb;
+  padding: 20px;
+}
+
+footer.hidden-copyright {
+  display: none;
+}
+
+#fun-btn {
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#contact-container {
+  font-family: "Times New Roman", serif;
+  font-size: 8pt;
+  text-align: center;
+  margin-bottom: 30px;
+}
 </style>
 </head>
 
@@ -313,15 +243,7 @@ img {
 </div>
 
 <!-- Fun mode -->
-<div id="physics-gallery">
-  <div id="even-more-fun-btn">even more fun mode</div>
-</div>
-
-<!-- Globe mode -->
-<div id="globe-mode">
-  <div id="globe-container"></div>
-  <div id="globe-return">return</div>
-</div>
+<div id="physics-gallery"></div>
 
 <!-- About Me Page -->
 <div id="about-page">
@@ -403,14 +325,12 @@ const physicsGallery = document.getElementById("physics-gallery");
 const mainHeader = document.getElementById("main-header");
 const mobileHeader = document.getElementById("mobile-header");
 const footer = document.getElementById("footer");
-const evenMoreFunBtn = document.getElementById("even-more-fun-btn");
 
 funBtn.onclick = () => {
   staticGallery.classList.add("hidden");
   funBtn.classList.add("hidden");
   footer.classList.add("hidden-copyright");
   physicsGallery.style.display = "block";
-  evenMoreFunBtn.classList.add("active");
   document.body.style.overflow = "hidden";
   
   if (isMobile) {
@@ -442,7 +362,6 @@ function teardownPhysics() {
   returnSep.classList.add("hidden");
   mainHeader.classList.remove("fun-mode");
   mobileHeader.classList.remove("active");
-  evenMoreFunBtn.classList.remove("active");
   document.body.style.overflow = "";
 }
 
@@ -479,17 +398,21 @@ function initPhysics() {
     Bodies.rectangle(w+40, h/2, 80, h, { isStatic:true })
   ]);
 
-  // Drag
+  // Mouse constraint for dragging
   const mouse = Mouse.create(render.canvas);
   mouseConstraint = MouseConstraint.create(engine, {
-    mouse,
+    mouse: mouse,
     constraint: {
-      stiffness: 0.8,
-      damping: 0.3,
-      render: { visible:false }
+      stiffness: 0.2,
+      damping: 0.1,
+      render: { visible: false }
     }
   });
+  
   World.add(engine.world, mouseConstraint);
+  
+  // Keep the canvas mouse in sync with rendering
+  render.mouse = mouse;
 
   // Photos
   const photos = [
@@ -566,127 +489,6 @@ function initPhysics() {
       });
     });
   });
-}
-</script>
-
-<script>
-/* ================= GLOBE MODE ================= */
-
-const globeMode = document.getElementById("globe-mode");
-const globeContainer = document.getElementById("globe-container");
-const globeReturn = document.getElementById("globe-return");
-let globeScene, globeCamera, globeRenderer, globeGroup, globeAnimationId;
-
-evenMoreFunBtn.onclick = () => {
-  // Hide fun mode
-  physicsGallery.style.display = "none";
-  mainHeader.style.display = "none";
-  mobileHeader.style.display = "none";
-  
-  // Show globe mode
-  globeMode.classList.add("active");
-  initGlobe();
-};
-
-globeReturn.onclick = () => {
-  // Cleanup globe
-  cancelAnimationFrame(globeAnimationId);
-  if (globeRenderer) {
-    globeContainer.removeChild(globeRenderer.domElement);
-    globeRenderer.dispose();
-  }
-  
-  // Return to fun mode
-  globeMode.classList.remove("active");
-  physicsGallery.style.display = "block";
-  
-  if (isMobile) {
-    mobileHeader.style.display = "block";
-  } else {
-    mainHeader.style.display = "flex";
-  }
-};
-
-function initGlobe() {
-  // Scene
-  globeScene = new THREE.Scene();
-  
-  // Camera
-  globeCamera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  globeCamera.position.z = 8;
-  
-  // Renderer
-  globeRenderer = new THREE.WebGLRenderer({ antialias: true });
-  globeRenderer.setSize(window.innerWidth, window.innerHeight);
-  globeRenderer.setClearColor(0x000000);
-  globeContainer.appendChild(globeRenderer.domElement);
-  
-  // Group to hold all photos
-  globeGroup = new THREE.Group();
-  globeScene.add(globeGroup);
-  
-  // Add ambient light
-  const light = new THREE.AmbientLight(0xffffff, 1);
-  globeScene.add(light);
-  
-  // Get photos from the static gallery
-  const galleryImages = document.querySelectorAll('#static-gallery img');
-  const photos = Array.from(galleryImages).map(img => img.src);
-  
-  const radius = 5;
-  const textureLoader = new THREE.TextureLoader();
-  
-  // Distribute photos using Fibonacci sphere
-  const numPhotos = Math.min(photos.length, 50); // Limit for performance
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  
-  for (let i = 0; i < numPhotos; i++) {
-    const y = 1 - (i / (numPhotos - 1)) * 2;
-    const radiusAtY = Math.sqrt(1 - y * y);
-    const theta = goldenAngle * i;
-    
-    const x = Math.cos(theta) * radiusAtY;
-    const z = Math.sin(theta) * radiusAtY;
-    
-    const texture = textureLoader.load(photos[i]);
-    const material = new THREE.MeshBasicMaterial({ 
-      map: texture,
-      side: THREE.DoubleSide
-    });
-    const geometry = new THREE.PlaneGeometry(0.8, 0.8);
-    const mesh = new THREE.Mesh(geometry, material);
-    
-    mesh.position.set(x * radius, y * radius, z * radius);
-    mesh.lookAt(0, 0, 0);
-    
-    globeGroup.add(mesh);
-  }
-  
-  // Animation loop
-  function animate() {
-    globeAnimationId = requestAnimationFrame(animate);
-    
-    // Rotate globe slowly
-    globeGroup.rotation.y += 0.002;
-    
-    globeRenderer.render(globeScene, globeCamera);
-  }
-  
-  animate();
-  
-  // Handle window resize
-  function onWindowResize() {
-    globeCamera.aspect = window.innerWidth / window.innerHeight;
-    globeCamera.updateProjectionMatrix();
-    globeRenderer.setSize(window.innerWidth, window.innerHeight);
-  }
-  
-  window.addEventListener('resize', onWindowResize);
 }
 </script>
 
