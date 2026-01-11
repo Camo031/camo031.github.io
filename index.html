@@ -283,7 +283,7 @@ const physicsGalleryEl = document.getElementById("physics-gallery");
 const funTopBar = document.getElementById("fun-top-bar");
 const funDesktopBtn = document.getElementById("fun-btn");
 const funMobileBtn = document.getElementById("fun-btn-mobile");
-let engine, world, bodies = [];
+let engine, render, world, bodies = [];
 
 function startFunMode() {
   // Hide main page elements
@@ -293,10 +293,10 @@ function startFunMode() {
   funDesktopBtn.style.display = "none";
   funMobileBtn.style.display = "none";
   document.getElementById("main-header").style.display = "none";
-  document.getElementById("footer").style.display = "none"; // hide bottom completely
+  document.getElementById("footer").style.display = "none";
   document.body.style.overflow = "hidden";
 
-  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
+  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Runner } = Matter;
   engine = Engine.create();
   world = engine.world;
   engine.gravity.y = 0;
@@ -304,14 +304,23 @@ function startFunMode() {
   const w = window.innerWidth;
   const h = window.innerHeight - funTopBar.offsetHeight;
 
-  const render = Render.create({
+  render = Render.create({
     element: physicsGalleryEl,
     engine: engine,
-    options: { width: w, height: h, wireframes: false, background: "#111" }
+    options: { 
+      width: w, 
+      height: h, 
+      wireframes: false, 
+      background: "#111",
+      pixelRatio: window.devicePixelRatio || 1
+    }
   });
 
   Render.run(render);
-  Engine.run(engine);
+  
+  // Use Runner instead of Engine.run for better cross-browser compatibility
+  const runner = Runner.create();
+  Runner.run(runner, engine);
 
   // Walls
   World.add(world, [
@@ -376,8 +385,21 @@ funTopBar.onclick = () => {
   funDesktopBtn.style.display = "inline-block";
   funMobileBtn.style.display = "inline-block";
   document.getElementById("main-header").style.display = "flex";
-  document.getElementById("footer").style.display = "flex"; // show bottom again
-  if(engine) Matter.World.clear(world);
+  document.getElementById("footer").style.display = "flex";
+  
+  // Properly cleanup Matter.js
+  if(render) {
+    Render.stop(render);
+    render.canvas.remove();
+    render.canvas = null;
+    render.context = null;
+    render.textures = {};
+  }
+  if(engine) {
+    Matter.World.clear(world);
+    Matter.Engine.clear(engine);
+  }
+  
   bodies = [];
   physicsGalleryEl.innerHTML = "";
   document.body.style.overflow = "";
