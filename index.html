@@ -9,9 +9,9 @@ layout: null
 <title>Camden Lethcoe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Lightbox -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
 <style>
 body {
@@ -25,12 +25,24 @@ h1 {
   margin: 20px;
   font-family: Georgia, serif;
   font-size: 48px;
-  position: relative;
-  z-index: 5;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: baseline;
 }
 
-h1.fun-mode {
-  pointer-events: none;
+h1 a {
+  font-size: 13px;
+  color: #999;
+  text-decoration: none;
+  font-weight: 300;
+}
+
+h1 a:hover { color: #fff; }
+
+.separator {
+  color: #666;
+  font-size: 10px;
 }
 
 .gallery {
@@ -55,77 +67,42 @@ h1.fun-mode {
   .gallery { column-count: 2; }
 }
 
-.hidden { display: none !important; }
-
-#physics-gallery {
-  position: fixed;
-  inset: 0;
-  background: #111;
-  display: none;
-  z-index: 20;
-}
-
-#physics-gallery canvas {
-  cursor: grab;
-}
-#physics-gallery canvas:active {
-  cursor: grabbing;
-}
-
 footer {
   text-align: center;
   color: #bbb;
   padding: 20px;
-}
-
-footer.hidden {
-  display: none;
-}
-
-#fun-btn {
   font-size: 12px;
-  cursor: pointer;
 }
 
-.mobile-fun-header {
-  display: none;
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background: #111;
-  padding: 20px;
+#contact-container {
+  font-family: "Times New Roman", serif;
+  font-size: 8pt;
   text-align: center;
-  z-index: 30;
-}
-
-.mobile-fun-header.active {
-  display: block;
-}
-
-@media (max-width: 768px) {
-  h1.fun-mode { display: none; }
+  margin-bottom: 30px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="mobile-fun-header" id="mobile-header">
-  <span id="mobile-return">return to normalcy</span>
-</div>
+<h1>
+  <span>Camden Lethcoe</span>
+  <span class="separator">|</span>
+  <a href="https://instagram.com/ensembleofthings" target="_blank">instagram</a>
+  <span class="separator">|</span>
+  <a href="mailto:cam@lethcoe.pics">email</a>
+</h1>
 
-<h1 id="main-header">Camden Lethcoe</h1>
-
-<div class="gallery" id="static-gallery">
+<div class="gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% assign special = "000986310012_result,000986320014_result" | split: "," %}
+{% assign special_names = "000986310012_result,000986320014_result" | split: "," %}
 
 {% assign normal = "" | split: "" %}
 {% assign bottom = "" | split: "" %}
 
 {% for photo in photos %}
   {% assign is_special = false %}
-  {% for s in special %}
+  {% for s in special_names %}
     {% if photo.name contains s %}
       {% assign is_special = true %}
     {% endif %}
@@ -138,148 +115,43 @@ footer.hidden {
   {% endif %}
 {% endfor %}
 
-{% assign normal = normal | sort: "name" %}
 {% assign normal = normal | shuffle %}
 
 {% for photo in normal %}
-<a href="{{ photo.path }}" data-lightbox="portfolio">
-  <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
-</a>
+  <a href="{{ photo.path }}" data-lightbox="portfolio">
+    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
+  </a>
 {% endfor %}
 
 {% for photo in bottom %}
-<a href="{{ photo.path }}" data-lightbox="portfolio">
-  <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
-</a>
+  <a href="{{ photo.path }}" data-lightbox="portfolio">
+    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
+  </a>
 {% endfor %}
 </div>
 
-<div id="physics-gallery"></div>
-
-<footer id="footer">
-  <div id="fun-btn">click for fun</div>
+<footer>
   © <span id="y"></span> Camden Lethcoe
 </footer>
 
+<div id="contact-container">
+  <span id="contact-button">contact me</span>
+  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
+</div>
+
 <script>
 document.getElementById("y").textContent = new Date().getFullYear();
+document.getElementById("contact-button").onclick = () => {
+  document.getElementById("email").style.opacity = 1;
+};
 
-const {
-  Engine, Render, World, Bodies,
-  Mouse, MouseConstraint
-} = Matter;
-
-const funBtn = document.getElementById("fun-btn");
-const gallery = document.getElementById("static-gallery");
-const physicsWrap = document.getElementById("physics-gallery");
-const footer = document.getElementById("footer");
-const header = document.getElementById("main-header");
-const mobileHeader = document.getElementById("mobile-header");
-const mobileReturn = document.getElementById("mobile-return");
-
-let engine, render;
-
-funBtn.onclick = startFun;
-mobileReturn.onclick = stopFun;
-
-function startFun() {
-  gallery.classList.add("hidden");
-  footer.classList.add("hidden");
-  header.classList.add("fun-mode");
-  physicsWrap.style.display = "block";
-
-  if (window.innerWidth <= 768) {
-    mobileHeader.classList.add("active");
-  }
-
-  document.body.style.overflow = "hidden";
-  initPhysics();
-}
-
-function stopFun() {
-  Matter.Render.stop(render);
-  Matter.World.clear(engine.world);
-  Matter.Engine.clear(engine);
-  render.canvas.remove();
-
-  physicsWrap.style.display = "none";
-  gallery.classList.remove("hidden");
-  footer.classList.remove("hidden");
-  header.classList.remove("fun-mode");
-  mobileHeader.classList.remove("active");
-  document.body.style.overflow = "";
-}
-
-function initPhysics() {
-  engine = Engine.create();
-  engine.gravity.y = 0;
-
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-
-  render = Render.create({
-    element: physicsWrap,
-    engine,
-    options: {
-      width: w,
-      height: h,
-      background: "#111",
-      wireframes: false,
-      pixelRatio: window.devicePixelRatio
-    }
-  });
-
-  Render.run(render);
-  Engine.run(engine);
-
-  World.add(engine.world, [
-    Bodies.rectangle(w/2, -50, w, 100, { isStatic:true }),
-    Bodies.rectangle(w/2, h+50, w, 100, { isStatic:true }),
-    Bodies.rectangle(-50, h/2, 100, h, { isStatic:true }),
-    Bodies.rectangle(w+50, h/2, 100, h, { isStatic:true })
-  ]);
-
-  const mouse = Mouse.create(render.canvas);
-  mouse.pixelRatio = render.options.pixelRatio;
-
-  const mouseConstraint = MouseConstraint.create(engine, {
-    mouse,
-    constraint: {
-      stiffness: 0.9,
-      render: { visible: false }
-    }
-  });
-
-  World.add(engine.world, mouseConstraint);
-  render.mouse = mouse;
-
-  const images = [
-  {% for photo in photos %}
-    "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
-  {% endfor %}
-  ];
-
-  images.forEach(src => {
-    const size = 80 + Math.random() * 40;
-    const body = Bodies.circle(
-      Math.random() * w,
-      Math.random() * h,
-      size / 2,
-      {
-        restitution: 0.95,
-        frictionAir: 0.02,
-        render: {
-          sprite: {
-            texture: src,
-            xScale: size / 400,
-            yScale: size / 400
-          }
-        }
-      }
-    );
-    World.add(engine.world, body);
-  });
-}
+document.addEventListener('contextmenu', e => {
+  if (e.target.tagName === 'IMG') e.preventDefault();
+});
+document.addEventListener('dragstart', e => {
+  if (e.target.tagName === 'IMG') e.preventDefault();
+});
 </script>
+
 </body>
 </html>
