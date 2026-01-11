@@ -143,7 +143,7 @@ h1 a:hover, #return-btn:hover {
 }
 
 /* Disable right-click on images */
-img {
+.gallery img {
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
@@ -153,6 +153,11 @@ img {
 
 .gallery a {
   pointer-events: auto;
+}
+
+/* Allow interaction with physics canvas */
+#physics-gallery canvas {
+  pointer-events: auto !important;
 }
 
 /* Mobile fun mode header */
@@ -222,11 +227,11 @@ footer.hidden-copyright {
 <h1 id="main-header">
   <span>Camden Lethcoe</span>
   <span class="separator">|</span>
-  <a href="https://instagram.com/ensembleofthings" target="_blank">Instagram</a>
+  <a href="https://instagram.com/ensembleofthings" target="_blank">instagram</a>
   <span class="separator">|</span>
-  <a href="mailto:cam@lethcoe.pics">Email</a>
+  <a href="mailto:cam@lethcoe.pics">email</a>
   <span class="separator">|</span>
-  <a id="about-link">About Me</a>
+  <a id="about-link">about me</a>
   <span class="separator hidden" id="return-sep">|</span>
   <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
@@ -403,8 +408,8 @@ function initPhysics() {
   mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
     constraint: {
-      stiffness: 0.2,
-      damping: 0.1,
+      stiffness: 0.8,
+      damping: 0.3,
       render: { visible: false }
     }
   });
@@ -413,6 +418,10 @@ function initPhysics() {
   
   // Keep the canvas mouse in sync with rendering
   render.mouse = mouse;
+  
+  // Prevent scrolling on canvas
+  mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
+  mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel);
 
   // Photos
   const photos = [
@@ -436,6 +445,8 @@ function initPhysics() {
       {
         restitution: 0.9,
         frictionAir: 0.08,
+        friction: 0.1,
+        density: 0.001,
         render: {
           sprite: {
             texture: p.thumb,
