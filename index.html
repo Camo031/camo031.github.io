@@ -281,14 +281,19 @@ contactBtn.onclick = () => {
 /* ---------- Fun Mode ---------- */
 const physicsGalleryEl = document.getElementById("physics-gallery");
 const funTopBar = document.getElementById("fun-top-bar");
+const funDesktopBtn = document.getElementById("fun-btn");
+const funMobileBtn = document.getElementById("fun-btn-mobile");
 let engine, world, bodies = [];
 
 function startFunMode() {
+  // Hide main page buttons
   gallery.classList.add("hidden");
-  physicsGalleryEl.style.display = "block";
   funTopBar.style.display = "block";
-  document.body.style.overflow = "hidden";
+  physicsGalleryEl.style.display = "block";
+  funDesktopBtn.style.display = "none";
+  funMobileBtn.style.display = "none";
   document.getElementById("main-header").style.display = "none";
+  document.body.style.overflow = "hidden";
 
   const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
   engine = Engine.create();
@@ -360,13 +365,15 @@ function startFunMode() {
   });
 }
 
-document.getElementById("fun-btn").onclick = startFunMode;
-document.getElementById("fun-btn-mobile").onclick = startFunMode;
+funDesktopBtn.onclick = startFunMode;
+funMobileBtn.onclick = startFunMode;
 
 funTopBar.onclick = () => {
   physicsGalleryEl.style.display = "none";
   gallery.classList.remove("hidden");
   funTopBar.style.display = "none";
+  funDesktopBtn.style.display = "inline-block";
+  funMobileBtn.style.display = "inline-block";
   document.getElementById("main-header").style.display = "flex";
   if(engine) Matter.World.clear(world);
   bodies = [];
