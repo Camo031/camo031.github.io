@@ -79,7 +79,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   bottom: 0;
   display: none;
   z-index: 100;
-  border: 1px solid #111; /* invisible border */
+  border: 1px solid #111;
 }
 
 #physics-gallery canvas {
@@ -93,6 +93,24 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 }
 
 #physics-gallery canvas:active { cursor: grabbing; }
+
+#fun-top-bar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 15px 0;
+  background: #111;
+  z-index: 101;
+  font-size: 14px;
+  cursor: pointer;
+  color: #bbb;
+  font-family: Arial, sans-serif;
+  transition: color 0.2s ease;
+}
+#fun-top-bar:hover { color: #fff; }
 
 #about-page {
   display: none;
@@ -116,7 +134,6 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   font-weight: 300;
   letter-spacing: 0.3px;
 }
-
 #about-return:hover { color: #fff; }
 
 #about-text {
@@ -135,14 +152,11 @@ footer {
   z-index: 10;
 }
 
-#fun-btn, #mobile-fun-btn {
+#fun-btn, #fun-btn-mobile {
   font-size: 12px;
   cursor: pointer;
+  display: inline-block;
   margin-bottom: 10px;
-}
-
-#mobile-fun-btn {
-  display: none;
 }
 
 #contact-container {
@@ -150,16 +164,21 @@ footer {
   font-size: 8pt;
   text-align: center;
   margin-bottom: 30px;
+  position: relative;
 }
 
-@media (max-width: 768px) {
-  #fun-btn { display: none; } /* desktop-only */
-  #mobile-fun-btn { display: block; } /* mobile-only */
+#contact-button, #contact-email {
+  display: inline-block;
+  transition: opacity 0.5s ease;
 }
+
+#contact-email { opacity: 0; }
 </style>
 </head>
 
 <body>
+
+<div id="fun-top-bar">return to normalcy</div>
 
 <h1 id="main-header">
   <span>Camden Lethcoe</span>
@@ -169,8 +188,6 @@ footer {
   <a href="mailto:cam@lethcoe.pics">email</a>
   <span class="separator">|</span>
   <a id="about-link">about me</a>
-  <span class="separator hidden" id="return-sep">|</span>
-  <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
 
 <div class="gallery" id="static-gallery">
@@ -193,23 +210,18 @@ footer {
 
 <footer id="footer">
   <div id="fun-btn">click for fun</div>
-  <div id="mobile-fun-btn">tap for fun</div>
+  <div id="fun-btn-mobile">tap for fun</div>
   © <span id="y"></span> Camden Lethcoe
 </footer>
 
 <div id="contact-container">
   <span id="contact-button">contact me</span>
-  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
+  <span id="contact-email">cam@lethcoe.pics</span>
 </div>
 
 <script>
 /* ---------- Basics ---------- */
 document.getElementById("y").textContent = new Date().getFullYear();
-document.getElementById("contact-button").onclick = () => {
-  document.getElementById("email").style.opacity = 1;
-};
-document.addEventListener("contextmenu", e => { if(e.target.tagName === "IMG") e.preventDefault(); });
-document.addEventListener("dragstart", e => { if(e.target.tagName === "IMG") e.preventDefault(); });
 
 /* ---------- About ---------- */
 const aboutLink = document.getElementById("about-link");
@@ -238,34 +250,14 @@ normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
 
 /* ---------- Fun Mode ---------- */
-const funBtn = document.getElementById("fun-btn");
-const mobileFunBtn = document.getElementById("mobile-fun-btn");
-const returnBtn = document.getElementById("return-btn");
-const staticGalleryEl = document.getElementById("static-gallery");
 const physicsGalleryEl = document.getElementById("physics-gallery");
-
+const funTopBar = document.getElementById("fun-top-bar");
 let engine, world, bodies = [];
 
-[funBtn, mobileFunBtn].forEach(btn => btn.onclick = () => startFunMode());
-
-returnBtn.onclick = () => {
-  if(engine) Matter.World.clear(world);
-  bodies = [];
-  physicsGalleryEl.innerHTML = "";
-  physicsGalleryEl.style.display = "none";
-  staticGalleryEl.classList.remove("hidden");
-  funBtn.classList.remove("hidden");
-  mobileFunBtn.classList.remove("hidden");
-  returnBtn.classList.add("hidden");
-  document.body.style.overflow = "";
-};
-
 function startFunMode() {
-  staticGalleryEl.classList.add("hidden");
-  funBtn.classList.add("hidden");
-  mobileFunBtn.classList.add("hidden");
-  returnBtn.classList.remove("hidden");
+  gallery.classList.add("hidden");
   physicsGalleryEl.style.display = "block";
+  funTopBar.style.display = "block";
   document.body.style.overflow = "hidden";
 
   const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
@@ -274,7 +266,7 @@ function startFunMode() {
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - document.querySelector("h1").offsetHeight - 10;
+  const h = window.innerHeight - funTopBar.offsetHeight;
 
   const render = Render.create({
     element: physicsGalleryEl,
@@ -304,49 +296,68 @@ function startFunMode() {
 
   // Load images
   let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
-
-  // Reduce number on mobile
   if(window.innerWidth <= 768) imgElements = imgElements.slice(0, Math.ceil(imgElements.length/3));
 
   bodies = [];
-  const promises = imgElements.map(imgEl => new Promise(resolve => {
-    const img = new Image();
-    img.src = imgEl.src;
-    img.onload = () => resolve(img);
-  }));
+  imgElements.forEach((imgEl, i) => {
+    const size = 70 + Math.random()*40;
+    const name = imgEl.parentElement.dataset.name;
+    const isBottom = bottomNames.some(n => name.includes(n));
+    const x = Math.random()*(w-100)+50;
+    const y = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
 
-  Promise.all(promises).then(images => {
-    images.forEach((img, i) => {
-      const size = 70 + Math.random()*40;
-      const name = imgElements[i].parentElement.dataset.name;
-      const isBottom = bottomNames.some(n => name.includes(n));
-      const x = Math.random()*(w-100)+50;
-      const y = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
-
-      const body = Bodies.circle(x, y, size/2, {
-        restitution: 0.9,
-        frictionAir: 0.06,
-        render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
-      });
-      bodies.push(body);
-      World.add(world, body);
+    const body = Bodies.circle(x, y, size/2, {
+      restitution: 0.9,
+      frictionAir: 0.06,
+      render: { sprite: { texture: imgEl.src, xScale: size/400, yScale: size/400 } }
     });
+    bodies.push(body);
+    World.add(world, body);
+  });
 
-    Events.on(engine,"beforeUpdate",()=>{
-      bodies.forEach(a=>{
-        bodies.forEach(b=>{
-          if(a===b) return;
-          const dx = b.position.x - a.position.x;
-          const dy = b.position.y - a.position.y;
-          const dist = Math.hypot(dx,dy)||1;
-          const f = 0.000006/(dist*dist);
-          Body.applyForce(a,a.position,{x:dx/dist*f, y:dy/dist*f});
-        });
-        Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
+  Events.on(engine,"beforeUpdate",()=>{
+    bodies.forEach(a=>{
+      bodies.forEach(b=>{
+        if(a===b) return;
+        const dx = b.position.x - a.position.x;
+        const dy = b.position.y - a.position.y;
+        const dist = Math.hypot(dx,dy)||1;
+        const f = 0.000006/(dist*dist);
+        Body.applyForce(a,a.position,{x:dx/dist*f, y:dy/dist*f});
       });
+      Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
     });
   });
 }
+
+/* ---------- Start Fun Mode Buttons ---------- */
+const desktopFunBtn = document.getElementById("fun-btn");
+const mobileFunBtn = document.getElementById("fun-btn-mobile");
+
+desktopFunBtn.onclick = startFunMode;
+mobileFunBtn.onclick = startFunMode;
+
+funTopBar.onclick = () => {
+  physicsGalleryEl.style.display = "none";
+  gallery.classList.remove("hidden");
+  funTopBar.style.display = "none";
+  if(engine) Matter.World.clear(world);
+  bodies = [];
+  physicsGalleryEl.innerHTML = "";
+  document.body.style.overflow = "";
+};
+
+/* ---------- Contact Button Fade ---------- */
+const contactBtn = document.getElementById("contact-button");
+const contactEmail = document.getElementById("contact-email");
+
+contactBtn.onclick = () => {
+  contactBtn.style.opacity = 0;
+  setTimeout(() => {
+    contactBtn.style.display = "none";
+    contactEmail.style.opacity = 1;
+  }, 500);
+};
 </script>
 </body>
 </html>
