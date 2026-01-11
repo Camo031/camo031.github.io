@@ -32,8 +32,8 @@ h1 {
   gap: 20px;
   flex-wrap: wrap;
   align-items: baseline;
-  position: relative;
   z-index: 10;
+  position: relative;
 }
 
 h1 a, #return-btn {
@@ -41,22 +41,15 @@ h1 a, #return-btn {
   color: #999;
   text-decoration: none;
   cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-weight: 300;
-  letter-spacing: 0.3px;
-  transition: color 0.2s ease;
 }
 
 h1 a:hover, #return-btn:hover {
   color: #fff;
 }
 
-.separator { 
-  color: #666;
-  font-size: 10px;
-}
+.separator { font-size: 10px; color: #666; }
 
-/* Masonry grid */
 .gallery {
   column-count: 4;
   column-gap: 0;
@@ -64,33 +57,20 @@ h1 a:hover, #return-btn:hover {
   margin: 0 auto;
 }
 
-.gallery a {
-  display: block;
-  width: 100%;
-  break-inside: avoid;
-}
-
+.gallery a { display: block; break-inside: avoid; }
 .gallery img {
   width: 100%;
   display: block;
   pointer-events: none;
-  user-select: none;
-}
-
-@media (max-width: 768px) {
-  h1 { font-size: 32px; }
-  .gallery { column-count: 2; }
 }
 
 .hidden { display: none !important; }
 
-/* Physics canvas */
 #physics-gallery {
   position: fixed;
   top: 120px;
+  inset-inline: 0;
   bottom: 0;
-  left: 0;
-  right: 0;
   display: none;
   z-index: 100;
 }
@@ -103,46 +83,15 @@ h1 a:hover, #return-btn:hover {
   cursor: grabbing;
 }
 
-/* About */
-#about-page {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 100;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-#about-page.active { display: flex; }
-
-#about-return {
-  font-size: 13px;
-  color: #999;
-  cursor: pointer;
-  margin-bottom: 60px;
-}
-
-#about-return:hover { color: #fff; }
-
-#about-text {
-  font-family: Georgia, serif;
-  font-size: 20px;
-  max-width: 600px;
-  text-align: center;
-}
-
 footer {
   text-align: center;
-  color: #bbb;
   padding: 20px;
+  color: #bbb;
 }
 
 #fun-btn {
-  font-size: 12px;
   cursor: pointer;
+  font-size: 12px;
 }
 </style>
 </head>
@@ -171,7 +120,7 @@ footer {
 {% endfor %}
 </div>
 
-<!-- Physics -->
+<!-- Physics gallery -->
 <div id="physics-gallery"></div>
 
 <footer id="footer">
@@ -184,8 +133,6 @@ document.getElementById("y").textContent = new Date().getFullYear();
 </script>
 
 <script>
-/* ================= FUN MODE ================= */
-
 const {
   Engine, Render, World, Bodies, Body,
   Mouse, MouseConstraint, Composite, Events
@@ -205,6 +152,7 @@ funBtn.onclick = () => {
   physicsGallery.style.display = "block";
   returnBtn.classList.remove("hidden");
   returnSep.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
   initPhysics();
 };
 
@@ -220,6 +168,7 @@ function teardownPhysics() {
   funBtn.classList.remove("hidden");
   returnBtn.classList.add("hidden");
   returnSep.classList.add("hidden");
+  document.body.style.overflow = "";
 }
 
 function initPhysics() {
@@ -252,8 +201,9 @@ function initPhysics() {
     Bodies.rectangle(w+50, h/2, 100, h, { isStatic:true })
   ]);
 
-  /* ✅ FIXED MOUSE SCALING */
+  /* ✅ CORRECT MOUSE SETUP (DESKTOP FIX) */
   const mouse = Mouse.create(render.canvas);
+
   Mouse.setScale(mouse, {
     x: 1 / window.devicePixelRatio,
     y: 1 / window.devicePixelRatio
@@ -279,33 +229,37 @@ function initPhysics() {
 
   photos.forEach(src => {
     const size = 90 + Math.random() * 40;
+
     const body = Bodies.circle(
-      w/2 + Math.random()*200 - 100,
-      h/2 + Math.random()*200 - 100,
+      w/2 + Math.random()*300 - 150,
+      h/2 + Math.random()*300 - 150,
       size/2,
       {
         restitution: 0.95,
         frictionAir: 0.05,
+        density: 0.001,
         render: {
           sprite: {
             texture: src,
-            xScale: size/400,
-            yScale: size/400
+            xScale: size / 400,
+            yScale: size / 400
           }
         }
       }
     );
+
+    body.photo = true;
     World.add(engine.world, body);
   });
 
   Events.on(engine, "beforeUpdate", () => {
-    Composite.allBodies(engine.world).forEach(b => {
-      if (!b.isStatic) {
-        Body.applyForce(b, b.position, {
-          x: (Math.random() - 0.5) * 0.00002,
-          y: (Math.random() - 0.5) * 0.00002
-        });
-      }
+    const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
+
+    bodies.forEach(a => {
+      Body.applyForce(a, a.position, {
+        x: (Math.random() - 0.5) * 0.00002,
+        y: (Math.random() - 0.5) * 0.00002
+      });
     });
   });
 }
