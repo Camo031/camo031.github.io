@@ -71,7 +71,7 @@ h1 a, #return-btn {
 /* Physics canvas */
 #physics-gallery {
   position: fixed;
-  top: 120px;
+  top: 0;
   bottom: 0;
   left: 0;
   right: 0;
@@ -96,12 +96,50 @@ footer {
   text-align: center;
   margin-bottom: 30px;
 }
+
+/* Mobile fun mode header */
+.mobile-fun-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #111;
+  padding: 20px;
+  z-index: 10;
+  text-align: center;
+}
+
+.mobile-fun-header span {
+  font-size: 14px;
+  color: #bbb;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+}
+
+@media (max-width: 768px) {
+  h1.fun-mode {
+    display: none;
+  }
+  
+  .mobile-fun-header.active {
+    display: block;
+  }
+  
+  #physics-gallery.mobile-active {
+    top: 60px;
+  }
+}
 </style>
 </head>
 
 <body>
 
-<h1>
+<div class="mobile-fun-header" id="mobile-header">
+  <span id="mobile-return-btn">return to normalcy</span>
+</div>
+
+<h1 id="main-header">
   <span>Camden Lethcoe</span>
   <span class="separator">|</span>
   <a href="https://instagram.com/ensembleofthings" target="_blank">Instagram</a>
@@ -154,21 +192,33 @@ let engine, render, mouseConstraint;
 
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
+const mobileReturnBtn = document.getElementById("mobile-return-btn");
 const returnSep = document.getElementById("return-sep");
 const staticGallery = document.getElementById("static-gallery");
 const physicsGallery = document.getElementById("physics-gallery");
+const mainHeader = document.getElementById("main-header");
+const mobileHeader = document.getElementById("mobile-header");
 
 funBtn.onclick = () => {
   staticGallery.classList.add("hidden");
   funBtn.classList.add("hidden");
   physicsGallery.style.display = "block";
-  returnBtn.classList.remove("hidden");
-  returnSep.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+  
+  if (isMobile) {
+    mainHeader.classList.add("fun-mode");
+    mobileHeader.classList.add("active");
+    physicsGallery.classList.add("mobile-active");
+  } else {
+    returnBtn.classList.remove("hidden");
+    returnSep.classList.remove("hidden");
+  }
+  
   initPhysics();
 };
 
 returnBtn.onclick = teardownPhysics;
+mobileReturnBtn.onclick = teardownPhysics;
 
 function teardownPhysics() {
   Render.stop(render);
@@ -176,10 +226,13 @@ function teardownPhysics() {
   Engine.clear(engine);
   render.canvas.remove();
   physicsGallery.style.display = "none";
+  physicsGallery.classList.remove("mobile-active");
   staticGallery.classList.remove("hidden");
   funBtn.classList.remove("hidden");
   returnBtn.classList.add("hidden");
   returnSep.classList.add("hidden");
+  mainHeader.classList.remove("fun-mode");
+  mobileHeader.classList.remove("active");
   document.body.style.overflow = "";
 }
 
@@ -188,7 +241,7 @@ function initPhysics() {
   engine.gravity.x = 0;
   engine.gravity.y = 0;
 
-  const headerHeight = document.querySelector("h1").offsetHeight;
+  const headerHeight = isMobile ? 60 : document.querySelector("h1").offsetHeight;
 
   render = Render.create({
     element: physicsGallery,
@@ -263,27 +316,43 @@ function initPhysics() {
     World.add(engine.world, body);
   });
 
-  /* Gentle random drift + mild repel */
+  /* Gentle drift + mutual gravitational attraction */
   Events.on(engine, "beforeUpdate", () => {
     const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
+    
     bodies.forEach(a => {
+      // Mutual gravitational attraction between photos
       bodies.forEach(b => {
         if (a === b) return;
-        const dx = a.position.x - b.position.x;
-        const dy = a.position.y - b.position.y;
+        
+        const dx = b.position.x - a.position.x;
+        const dy = b.position.y - a.position.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < 100) {
+        
+        if (dist > 0) {
+          // Gravitational force (attractive)
+          const strength = 0.000008;
+          const force = strength / (dist * dist);
+          
           Body.applyForce(a, a.position, {
-            x: dx * 0.0000015,
-            y: dy * 0.0000015
+            x: (dx / dist) * force,
+            y: (dy / dist) * force
           });
+          
+          // Slight repulsion when very close to prevent clumping
+          if (dist < 100) {
+            Body.applyForce(a, a.position, {
+              x: -dx * 0.0000008,
+              y: -dy * 0.0000008
+            });
+          }
         }
       });
 
-      // slow random drift (no bias)
+      // Gentle random drift
       Body.applyForce(a, a.position, {
-        x: (Math.random() - 0.5) * 0.00002,
-        y: (Math.random() - 0.5) * 0.00002
+        x: (Math.random() - 0.5) * 0.00003,
+        y: (Math.random() - 0.5) * 0.00003
       });
     });
   });
