@@ -9,6 +9,10 @@ layout: null
 <title>Camden Lethcoe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Favicon -->
+<!-- Place your favicon.ico or favicon.png in the root of your repo (same folder as index.html) -->
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
 <!-- Lightbox -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
@@ -22,6 +26,7 @@ body {
   background: #111;
   color: #fff;
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -66,7 +71,6 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 .gallery img {
   width: 100%;
   display: block;
-  transition: transform 0.5s ease;
 }
 
 @media (max-width: 768px) {
@@ -78,21 +82,12 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 
 #physics-gallery {
   position: fixed;
-  top: 60px;
-  bottom: 0;
+  top: 60px; /* below header */
   left: 0;
   right: 0;
+  bottom: 0; /* stops above footer automatically */
   display: none;
   z-index: 100;
-}
-
-#physics-gallery img {
-  position: absolute;
-  user-select: none;
-  cursor: grab;
-  pointer-events: auto;
-  will-change: transform;
-  transition: transform 0.6s ease;
 }
 
 #about-page {
@@ -100,7 +95,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   position: fixed;
   inset: 0;
   background: #000;
-  z-index: 100;
+  z-index: 200;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -132,12 +127,21 @@ footer {
   text-align: center;
   color: #bbb;
   padding: 20px;
+  position: relative;
+  z-index: 10;
 }
 
 #fun-btn {
   font-size: 12px;
   cursor: pointer;
   margin-bottom: 10px;
+}
+
+#contact-container {
+  font-family: "Times New Roman", serif;
+  font-size: 8pt;
+  text-align: center;
+  margin-bottom: 30px;
 }
 </style>
 </head>
@@ -179,19 +183,25 @@ footer {
   © <span id="y"></span> Camden Lethcoe
 </footer>
 
-<script>
-/* ---------- basics ---------- */
-document.getElementById("y").textContent = new Date().getFullYear();
+<div id="contact-container">
+  <span id="contact-button">contact me</span>
+  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
+</div>
 
+<script>
+/* ---------- Basics ---------- */
+document.getElementById("y").textContent = new Date().getFullYear();
+document.getElementById("contact-button").onclick = () => {
+  document.getElementById("email").style.opacity = 1;
+};
 document.addEventListener("contextmenu", e => {
   if (e.target.tagName === "IMG") e.preventDefault();
 });
-
 document.addEventListener("dragstart", e => {
   if (e.target.tagName === "IMG") e.preventDefault();
 });
 
-/* ---------- about ---------- */
+/* ---------- About ---------- */
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
@@ -200,21 +210,16 @@ aboutLink.onclick = () => {
   aboutPage.classList.add("active");
   document.body.style.overflow = "hidden";
 };
-
 aboutReturn.onclick = () => {
   aboutPage.classList.remove("active");
   document.body.style.overflow = "";
 };
 
-/* ---------- random order + bottom images ---------- */
+/* ---------- Random order + bottom images ---------- */
 const gallery = document.getElementById("static-gallery");
 const items = Array.from(gallery.children);
 
-const bottomNames = [
-  "000986310012_result",
-  "000986320014_result"
-];
-
+const bottomNames = ["000986310012_result","000986320014_result"];
 const bottom = [];
 const normal = [];
 
@@ -230,20 +235,17 @@ bottom.sort(() => Math.random() - 0.5);
 gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
-</script>
 
-<script>
-/* ---------- FUN MODE DOM VERSION w/ SMOOTH TRANSITION ---------- */
+/* ---------- Fun Mode ---------- */
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
-const staticGallery = document.getElementById("static-gallery");
+const staticGalleryEl = document.getElementById("static-gallery");
 const physicsGallery = document.getElementById("physics-gallery");
 
-let engine, renderBodies = [];
+let engine, world, bodies = [];
 
 funBtn.onclick = () => {
-  // hide grid
-  staticGallery.classList.add("hidden");
+  staticGalleryEl.classList.add("hidden");
   funBtn.classList.add("hidden");
   returnBtn.classList.remove("hidden");
   physicsGallery.style.display = "block";
@@ -253,106 +255,84 @@ funBtn.onclick = () => {
 };
 
 returnBtn.onclick = () => {
-  renderBodies.forEach(b => b.element.remove());
-  renderBodies = [];
-  if (engine) Matter.World.clear(engine.world);
-  engine = null;
-
+  if(engine) Matter.World.clear(world);
+  bodies = [];
+  physicsGallery.innerHTML = "";
   physicsGallery.style.display = "none";
-  staticGallery.classList.remove("hidden");
+  staticGalleryEl.classList.remove("hidden");
   funBtn.classList.remove("hidden");
   returnBtn.classList.add("hidden");
   document.body.style.overflow = "";
 };
 
 function initPhysics() {
-  const { Engine, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
+  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Composite } = Matter;
+
   engine = Engine.create();
+  world = engine.world;
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - document.querySelector("h1").offsetHeight;
+  const h = window.innerHeight - document.querySelector("h1").offsetHeight - 60; // leave footer space
+
+  const render = Render.create({
+    element: physicsGallery,
+    engine: engine,
+    options: { width: w, height: h, wireframes: false, background: "#111" }
+  });
+
+  Render.run(render);
+  Engine.run(engine);
 
   // Walls
-  World.add(engine.world, [
+  World.add(world, [
     Bodies.rectangle(w/2,-50,w,100,{isStatic:true}),
     Bodies.rectangle(w/2,h+50,w,100,{isStatic:true}),
     Bodies.rectangle(-50,h/2,100,h,{isStatic:true}),
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  // For each grid image, create a physics image
-  const gridImages = document.querySelectorAll("#static-gallery img");
+  // Mouse
+  const mouse = Mouse.create(render.canvas);
+  const mouseConstraint = MouseConstraint.create(engine, { mouse: mouse, constraint: { stiffness: 0.8, render:{visible:false} } });
+  World.add(world, mouseConstraint);
+  render.mouse = mouse;
 
-  gridImages.forEach(img => {
+  // Images
+  const imgs = document.querySelectorAll("#static-gallery img");
+  imgs.forEach(img => {
     const rect = img.getBoundingClientRect();
-    const size = 90 + Math.random() * 40;
-    const targetX = Math.random() * (w - size) + size/2;
-    const targetY = Math.random() * (h - size) + size/2;
+    const size = 90 + Math.random()*40;
 
-    // create DOM image in physics layer
-    const el = document.createElement("img");
-    el.src = img.src;
-    el.style.width = `${size}px`;
-    el.style.height = "auto";
-    el.style.left = `${rect.left}px`;
-    el.style.top = `${rect.top}px`;
-    physicsGallery.appendChild(el);
+    // Determine if it's one of the two bottom images
+    const isBottom = bottomNames.some(n => img.parentElement.dataset.name.includes(n));
+    const yPos = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
 
-    // Matter body
-    const body = Bodies.circle(rect.left + size/2, rect.top + size/2, size/2, {
+    const body = Bodies.circle(rect.left + size/2, yPos, size/2, {
       restitution: 0.9,
-      frictionAir: 0.06
+      frictionAir: 0.06,
+      render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
     });
-    body.element = el;
-    renderBodies.push(body);
-    World.add(engine.world, body);
 
-    // Animate from grid to random start
-    setTimeout(() => {
-      el.style.transform = `translate(${targetX - rect.left}px, ${targetY - rect.top}px)`;
-      setTimeout(() => {
-        // After animation, remove transform and set position for physics
-        Body.setPosition(body, {x: targetX, y: targetY});
-        el.style.transition = "none";
-      }, 600);
-    }, 10);
+    bodies.push(body);
+    World.add(world, body);
   });
 
-  // Mouse drag
-  const mouse = Mouse.create(physicsGallery);
-  const mouseConstraint = MouseConstraint.create(engine,{
-    mouse,
-    constraint:{ stiffness:0.9, render:{visible:false} }
-  });
-  World.add(engine.world, mouseConstraint);
-
-  // Update loop
-  (function update(){
-    requestAnimationFrame(update);
-    renderBodies.forEach(b => {
-      b.element.style.left = `${b.position.x - b.circleRadius}px`;
-      b.element.style.top = `${b.position.y - b.circleRadius}px`;
-    });
-    Engine.update(engine, 1000/60);
-  })();
-
-  // Attraction / drift
-  Events.on(engine, "beforeUpdate", () => {
-    renderBodies.forEach(a => {
-      renderBodies.forEach(b => {
+  // Small attraction + drift
+  Events.on(engine,"beforeUpdate",()=>{
+    bodies.forEach(a=>{
+      bodies.forEach(b=>{
         if(a===b) return;
         const dx = b.position.x - a.position.x;
         const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        const f = 0.000006 / (dist*dist);
-        Body.applyForce(a, a.position, {x: dx / dist * f, y: dy / dist * f});
+        const dist = Math.hypot(dx,dy)||1;
+        const f = 0.000006/(dist*dist);
+        Body.applyForce(a,a.position,{x:dx/dist*f, y:dy/dist*f});
       });
-      Body.applyForce(a, a.position, {x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
+      Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
     });
   });
 }
 </script>
-
 </body>
 </html>
