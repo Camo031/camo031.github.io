@@ -135,7 +135,15 @@ footer {
   z-index: 10;
 }
 
-#fun-btn { font-size: 12px; cursor: pointer; margin-bottom: 10px; }
+#fun-btn, #mobile-fun-btn {
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+#mobile-fun-btn {
+  display: none;
+}
 
 #contact-container {
   font-family: "Times New Roman", serif;
@@ -145,7 +153,8 @@ footer {
 }
 
 @media (max-width: 768px) {
-  #fun-btn { display: none; } /* hide fun button on mobile */
+  #fun-btn { display: none; } /* desktop-only */
+  #mobile-fun-btn { display: block; } /* mobile-only */
 }
 </style>
 </head>
@@ -184,6 +193,7 @@ footer {
 
 <footer id="footer">
   <div id="fun-btn">click for fun</div>
+  <div id="mobile-fun-btn">tap for fun</div>
   © <span id="y"></span> Camden Lethcoe
 </footer>
 
@@ -229,13 +239,14 @@ bottom.forEach(el => gallery.appendChild(el));
 
 /* ---------- Fun Mode ---------- */
 const funBtn = document.getElementById("fun-btn");
+const mobileFunBtn = document.getElementById("mobile-fun-btn");
 const returnBtn = document.getElementById("return-btn");
 const staticGalleryEl = document.getElementById("static-gallery");
 const physicsGalleryEl = document.getElementById("physics-gallery");
 
 let engine, world, bodies = [];
 
-funBtn.onclick = () => startFunMode();
+[funBtn, mobileFunBtn].forEach(btn => btn.onclick = () => startFunMode());
 
 returnBtn.onclick = () => {
   if(engine) Matter.World.clear(world);
@@ -244,6 +255,7 @@ returnBtn.onclick = () => {
   physicsGalleryEl.style.display = "none";
   staticGalleryEl.classList.remove("hidden");
   funBtn.classList.remove("hidden");
+  mobileFunBtn.classList.remove("hidden");
   returnBtn.classList.add("hidden");
   document.body.style.overflow = "";
 };
@@ -251,6 +263,7 @@ returnBtn.onclick = () => {
 function startFunMode() {
   staticGalleryEl.classList.add("hidden");
   funBtn.classList.add("hidden");
+  mobileFunBtn.classList.add("hidden");
   returnBtn.classList.remove("hidden");
   physicsGalleryEl.style.display = "block";
   document.body.style.overflow = "hidden";
