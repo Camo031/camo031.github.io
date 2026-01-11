@@ -286,13 +286,14 @@ const funMobileBtn = document.getElementById("fun-btn-mobile");
 let engine, world, bodies = [];
 
 function startFunMode() {
-  // Hide main page buttons
+  // Hide main page elements
   gallery.classList.add("hidden");
   funTopBar.style.display = "block";
   physicsGalleryEl.style.display = "block";
   funDesktopBtn.style.display = "none";
   funMobileBtn.style.display = "none";
   document.getElementById("main-header").style.display = "none";
+  document.getElementById("footer").style.display = "none"; // hide bottom completely
   document.body.style.overflow = "hidden";
 
   const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
@@ -375,6 +376,7 @@ funTopBar.onclick = () => {
   funDesktopBtn.style.display = "inline-block";
   funMobileBtn.style.display = "inline-block";
   document.getElementById("main-header").style.display = "flex";
+  document.getElementById("footer").style.display = "flex"; // show bottom again
   if(engine) Matter.World.clear(world);
   bodies = [];
   physicsGalleryEl.innerHTML = "";
