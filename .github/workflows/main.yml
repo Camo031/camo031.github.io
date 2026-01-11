@@ -1,0 +1,51 @@
+name: Generate Thumbnails
+
+on:
+  push:
+    paths:
+      - 'photos/**'
+  workflow_dispatch:
+
+jobs:
+  generate-thumbnails:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+      
+      - name: Create thumbnails directory
+        run: mkdir -p thumbnails
+      
+      - name: Generate thumbnails
+        run: |
+          for img in photos/*; do
+            if [ -f "$img" ]; then
+              filename=$(basename "$img")
+              echo "Processing: $filename"
+              convert "$img" -resize 75% -quality 85 "thumbnails/$filename"
+            fi
+          done
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add thumbnails/
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push thumbnails
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "Generate thumbnails for photos"
+          git push
