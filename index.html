@@ -48,33 +48,13 @@ h1 a, #return-btn {
   transition: color 0.2s ease;
 }
 
-h1 a:hover, #return-btn:hover {
-  color: #fff;
-}
-
-.separator { 
-  color: #666;
-  font-size: 10px;
-}
+h1 a:hover, #return-btn:hover { color: #fff; }
+.separator { color: #666; font-size: 10px; }
 
 /* Masonry grid */
-.gallery {
-  column-count: 4;
-  column-gap: 0;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.gallery a {
-  display: block;
-  width: 100%;
-  break-inside: avoid;
-}
-
-.gallery img {
-  width: 100%;
-  display: block;
-}
+.gallery { column-count: 4; column-gap: 0; max-width: 1200px; margin: 0 auto; }
+.gallery a { display: block; width: 100%; break-inside: avoid; }
+.gallery img { width: 100%; display: block; }
 
 @media (max-width: 768px) {
   h1 { font-size: 32px; }
@@ -94,11 +74,7 @@ h1 a:hover, #return-btn:hover {
   z-index: 100;
 }
 
-#physics-gallery canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+#physics-gallery canvas { width: 100%; height: 100%; display: block; }
 
 /* About Me Page */
 #about-page {
@@ -140,11 +116,8 @@ h1 a:hover, #return-btn:hover {
   text-align: center;
 }
 
-@media (max-width: 768px) {
-  #about-text { font-size: 16px; padding: 0 20px; }
-}
+@media (max-width: 768px) { #about-text { font-size: 16px; padding: 0 20px; } }
 
-/* Mobile fun mode header */
 .mobile-fun-header {
   display: none;
   position: fixed;
@@ -170,22 +143,10 @@ h1 a:hover, #return-btn:hover {
   #physics-gallery.mobile-active { top: 60px; }
 }
 
-footer {
-  text-align: center;
-  color: #bbb;
-  padding: 20px;
-}
-
+footer { text-align: center; color: #bbb; padding: 20px; }
 footer.hidden-copyright { display: none; }
-
 #fun-btn { font-size: 12px; cursor: pointer; }
-
-#contact-container {
-  font-family: "Times New Roman", serif;
-  font-size: 8pt;
-  text-align: center;
-  margin-bottom: 30px;
-}
+#contact-container { font-family: "Times New Roman", serif; font-size: 8pt; text-align: center; margin-bottom: 30px; }
 </style>
 </head>
 
@@ -217,7 +178,6 @@ footer.hidden-copyright { display: none; }
 {% endfor %}
 </div>
 
-<!-- Fun mode -->
 <div id="physics-gallery"></div>
 
 <!-- About Me Page -->
@@ -241,19 +201,11 @@ footer.hidden-copyright { display: none; }
 <script>
 // Year and contact
 document.getElementById("y").textContent = new Date().getFullYear();
-document.getElementById("contact-button").onclick = () => {
-  document.getElementById("email").style.opacity = 1;
-};
+document.getElementById("contact-button").onclick = () => { document.getElementById("email").style.opacity = 1; };
 
 // Disable right-click on static gallery
-document.addEventListener('contextmenu', e => {
-  if(e.target.tagName==='IMG'||e.target.closest('.gallery')) e.preventDefault();
-});
-
-// Disable drag from static gallery
-document.addEventListener('dragstart', e => {
-  if(e.target.tagName==='IMG') e.preventDefault();
-});
+document.addEventListener('contextmenu', e => { if(e.target.tagName==='IMG'||e.target.closest('.gallery')) e.preventDefault(); });
+document.addEventListener('dragstart', e => { if(e.target.tagName==='IMG') e.preventDefault(); });
 
 // Randomize static gallery
 const gallery = document.getElementById("static-gallery");
@@ -263,7 +215,6 @@ Array.from(gallery.children).sort(()=>Math.random()-0.5).forEach(c=>gallery.appe
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
-
 aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow="hidden"; };
 aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow=""; };
 </script>
@@ -328,14 +279,8 @@ function initPhysics(){
   render = Render.create({
     element: physicsGallery,
     engine: engine,
-    options: {
-      width: w,
-      height: h,
-      wireframes: false,
-      background: "#111"
-    }
+    options: { width: w, height: h, wireframes: false, background: "#111" }
   });
-
   Render.run(render);
   Engine.run(engine);
 
@@ -346,7 +291,7 @@ function initPhysics(){
     Bodies.rectangle(-50,h/2,100,h,{isStatic:true}),
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ];
-  World.add(engine.world, walls);
+  World.add(engine.world,walls);
 
   // Photos
   const photos = [
@@ -355,28 +300,22 @@ function initPhysics(){
   {% endfor %}
   ];
 
-  photos.forEach(src=>{
+  const bodies = photos.map(src=>{
     const size = 90 + Math.random()*40;
     const x = w/2 + (Math.random()-0.5)*300;
     const y = h/2 + (Math.random()-0.5)*300;
-
-    const body = Bodies.circle(x, y, size/2, {
+    const body = Bodies.circle(x,y,size/2,{
       restitution: 0.9,
       friction: 0.1,
       frictionAir: 0.05,
       density: 0.001,
-      render: {
-        sprite: {
-          texture: src,
-          xScale: size/400,
-          yScale: size/400
-        }
-      }
+      render: { sprite: { texture: src, xScale: size/400, yScale: size/400 } }
     });
     World.add(engine.world, body);
+    return body;
   });
 
-  // Mouse drag
+  // Mouse drag with proper physics
   const mouse = Mouse.create(render.canvas);
   const mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
@@ -385,22 +324,20 @@ function initPhysics(){
   World.add(engine.world, mouseConstraint);
   render.mouse = mouse;
 
-  // Gentle drift + mutual attraction
+  // Gentle forces
   Events.on(engine,"beforeUpdate",()=>{
-    const bodies = Composite.allBodies(engine.world).filter(b=>b.render.sprite);
     bodies.forEach(a=>{
       bodies.forEach(b=>{
         if(a===b) return;
-        const dx = b.position.x - a.position.x;
-        const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx,dy);
+        const dx=b.position.x-a.position.x;
+        const dy=b.position.y-a.position.y;
+        const dist=Math.hypot(dx,dy);
         if(dist>0){
-          const f = 0.000008/(dist*dist);
+          const f=0.000008/(dist*dist);
           Body.applyForce(a,a.position,{x:(dx/dist)*f, y:(dy/dist)*f});
           if(dist<100) Body.applyForce(a,a.position,{x:-dx*0.0000008, y:-dy*0.0000008});
         }
       });
-      // gentle random drift
       Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
     });
   });
