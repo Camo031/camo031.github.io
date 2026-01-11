@@ -50,9 +50,23 @@ h1 a, #return-btn {
 h1 a:hover, #return-btn:hover { color: #fff; }
 .separator { color: #666; font-size: 10px; }
 
-.gallery { column-count: 4; column-gap: 0; max-width: 1200px; margin: 0 auto; }
-.gallery a { display: block; width: 100%; break-inside: avoid; }
-.gallery img { width: 100%; display: block; }
+.gallery {
+  column-count: 4;
+  column-gap: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.gallery a {
+  display: block;
+  width: 100%;
+  break-inside: avoid;
+}
+
+.gallery img {
+  width: 100%;
+  display: block;
+}
 
 @media (max-width: 768px) {
   h1 { font-size: 32px; }
@@ -80,35 +94,55 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   cursor: grabbing;
 }
 
-#about-page { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
-#about-page.active { display: flex; }
-
-#about-return { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; color: #999; cursor: pointer; margin-bottom: 60px; font-weight: 300; letter-spacing: 0.3px; transition: color 0.2s ease; }
-#about-return:hover { color: #fff; }
-
-#about-text { font-family: Georgia, serif; color: #fff; font-size: 20px; line-height: 1.8; max-width: 600px; text-align: center; }
-@media (max-width: 768px) { #about-text { font-size: 16px; padding: 0 20px; } }
-
-.mobile-fun-header { display: none; position: fixed; top: 0; left: 0; right: 0; background: #111; padding: 20px; z-index: 10; text-align: center; }
-.mobile-fun-header span { font-size: 14px; color: #bbb; cursor: pointer; font-family: Arial, sans-serif; }
-
-@media (max-width: 768px) {
-  h1.fun-mode { display: none; }
-  .mobile-fun-header.active { display: block; }
-  #physics-gallery.mobile-active { top: 60px; }
+#about-page {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
 }
 
-footer { text-align: center; color: #bbb; padding: 20px; }
+#about-page.active { display: flex; }
+
+#about-return {
+  font-size: 13px;
+  color: #999;
+  cursor: pointer;
+  margin-bottom: 60px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+}
+
+#about-return:hover { color: #fff; }
+
+#about-text {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  line-height: 1.8;
+  max-width: 600px;
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+  color: #bbb;
+  padding: 20px;
+}
+
 footer.hidden-copyright { display: none; }
-#fun-btn { font-size: 12px; cursor: pointer; }
-#contact-container { font-family: "Times New Roman", serif; font-size: 8pt; text-align: center; margin-bottom: 30px; }
+
+#fun-btn {
+  font-size: 12px;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
-<div class="mobile-fun-header" id="mobile-header">
-  <span id="mobile-return-btn">return to normalcy</span>
-</div>
 
 <h1 id="main-header">
   <span>Camden Lethcoe</span>
@@ -124,9 +158,8 @@ footer.hidden-copyright { display: none; }
 
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% assign shuffled_photos = photos | sort: "name" %}
-{% for photo in shuffled_photos %}
-  <a href="{{ photo.path }}" data-lightbox="portfolio" data-order="{{ forloop.index }}">
+{% for photo in photos %}
+  <a href="{{ photo.path }}" data-name="{{ photo.name }}">
     <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
   </a>
 {% endfor %}
@@ -146,99 +179,116 @@ footer.hidden-copyright { display: none; }
   © <span id="y"></span> Camden Lethcoe
 </footer>
 
-<div id="contact-container">
-  <span id="contact-button">contact me</span>
-  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
-</div>
-
 <script>
+/* ---------- basics ---------- */
 document.getElementById("y").textContent = new Date().getFullYear();
-document.getElementById("contact-button").onclick = () => { document.getElementById("email").style.opacity = 1; };
-document.addEventListener('contextmenu', e => { if(e.target.tagName==='IMG'||e.target.closest('.gallery')) e.preventDefault(); });
-document.addEventListener('dragstart', e => { if(e.target.tagName==='IMG') e.preventDefault(); });
 
-const gallery = document.getElementById("static-gallery");
-Array.from(gallery.children).sort(()=>Math.random()-0.5).forEach(c=>gallery.appendChild(c));
+document.addEventListener("contextmenu", e => {
+  if (e.target.tagName === "IMG") e.preventDefault();
+});
 
+document.addEventListener("dragstart", e => {
+  if (e.target.tagName === "IMG") e.preventDefault();
+});
+
+/* ---------- about ---------- */
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
-aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow="hidden"; };
-aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow=""; };
+
+aboutLink.onclick = () => {
+  aboutPage.classList.add("active");
+  document.body.style.overflow = "hidden";
+};
+
+aboutReturn.onclick = () => {
+  aboutPage.classList.remove("active");
+  document.body.style.overflow = "";
+};
+
+/* ---------- random order + bottom images ---------- */
+const gallery = document.getElementById("static-gallery");
+const items = Array.from(gallery.children);
+
+const bottomNames = [
+  "000986310012_result",
+  "000986320014_result"
+];
+
+const bottom = [];
+const normal = [];
+
+items.forEach(el => {
+  const name = el.dataset.name || "";
+  if (bottomNames.some(n => name.includes(n))) bottom.push(el);
+  else normal.push(el);
+});
+
+normal.sort(() => Math.random() - 0.5);
+bottom.sort(() => Math.random() - 0.5);
+
+gallery.innerHTML = "";
+normal.forEach(el => gallery.appendChild(el));
+bottom.forEach(el => gallery.appendChild(el));
 </script>
 
 <script>
-/* ================= ORIGINAL WORKING FUN MODE ================= */
+/* ---------- FUN MODE ---------- */
 const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Composite } = Matter;
 
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
-const mobileReturnBtn = document.getElementById("mobile-return-btn");
-const returnSep = document.getElementById("return-sep");
 const staticGallery = document.getElementById("static-gallery");
 const physicsGallery = document.getElementById("physics-gallery");
-const mainHeader = document.getElementById("main-header");
-const mobileHeader = document.getElementById("mobile-header");
-const footer = document.getElementById("footer");
 
 let engine, render;
 
 funBtn.onclick = () => {
   staticGallery.classList.add("hidden");
   funBtn.classList.add("hidden");
-  footer.classList.add("hidden-copyright");
+  returnBtn.classList.remove("hidden");
   physicsGallery.style.display = "block";
-  document.body.style.overflow="hidden";
-
-  if(window.innerWidth <= 768){
-    mainHeader.classList.add("fun-mode");
-    mobileHeader.classList.add("active");
-    physicsGallery.classList.add("mobile-active");
-  } else {
-    returnBtn.classList.remove("hidden");
-    returnSep.classList.remove("hidden");
-  }
-
+  document.body.style.overflow = "hidden";
   initPhysics();
 };
 
-returnBtn.onclick = teardownPhysics;
-mobileReturnBtn.onclick = teardownPhysics;
-
-function teardownPhysics(){
+returnBtn.onclick = () => {
   Render.stop(render);
   World.clear(engine.world);
   Engine.clear(engine);
   render.canvas.remove();
-  physicsGallery.style.display="none";
-  physicsGallery.classList.remove("mobile-active");
+  physicsGallery.style.display = "none";
   staticGallery.classList.remove("hidden");
   funBtn.classList.remove("hidden");
-  footer.classList.remove("hidden-copyright");
   returnBtn.classList.add("hidden");
-  returnSep.classList.add("hidden");
-  mainHeader.classList.remove("fun-mode");
-  mobileHeader.classList.remove("active");
-  document.body.style.overflow="";
-}
+  document.body.style.overflow = "";
+};
 
-function initPhysics(){
+function initPhysics() {
   engine = Engine.create();
-  engine.gravity.x = 0;
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - (window.innerWidth <= 768 ? 60 : document.querySelector("h1").offsetHeight);
+  const h = window.innerHeight - document.querySelector("h1").offsetHeight;
 
   render = Render.create({
     element: physicsGallery,
     engine,
-    options: { width: w, height: h, background: "#111", wireframes: false, pixelRatio: window.devicePixelRatio }
+    options: {
+      width: w,
+      height: h,
+      background: "#000",
+      wireframes: false,
+      pixelRatio: window.devicePixelRatio
+    }
   });
+
+  render.canvas.width = w;
+  render.canvas.height = h;
+
   Render.run(render);
   Engine.run(engine);
 
-  // Walls
   World.add(engine.world, [
     Bodies.rectangle(w/2,-40,w,80,{isStatic:true}),
     Bodies.rectangle(w/2,h+40,w,80,{isStatic:true}),
@@ -246,60 +296,52 @@ function initPhysics(){
     Bodies.rectangle(w+40,h/2,80,h,{isStatic:true})
   ]);
 
-  // Mouse drag
   const mouse = Mouse.create(render.canvas);
-  const mouseConstraint = MouseConstraint.create(engine, {
-    mouse: mouse,
-    constraint: { stiffness: 0.8, damping: 0.5, render: { visible: false } }
+  const mouseConstraint = MouseConstraint.create(engine,{
+    mouse,
+    constraint:{ stiffness:0.8, render:{visible:false} }
   });
+
   World.add(engine.world, mouseConstraint);
   render.mouse = mouse;
 
-  // Photos
-  const photos = [
-  {% for photo in photos %}
-    { thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}" },
-  {% endfor %}
-  ];
-
-  photos.forEach(p => {
-    const size = window.innerWidth <= 768 ? 50 + Math.random()*20 : 90 + Math.random()*40;
+  document.querySelectorAll("#static-gallery img").forEach(img => {
+    const size = 90 + Math.random() * 40;
     const body = Bodies.circle(
-      w*0.25 + Math.random()*w*0.5,
-      h*0.25 + Math.random()*h*0.5,
-      size/2,
+      Math.random() * w,
+      Math.random() * h,
+      size / 2,
       {
         restitution: 0.9,
-        frictionAir: 0.08,
-        friction: 0.1,
-        density: 0.001,
-        render: { sprite: { texture: p.thumb, xScale: size/400, yScale: size/400 } }
+        frictionAir: 0.06,
+        render: {
+          sprite: {
+            texture: img.src,
+            xScale: size / 400,
+            yScale: size / 400
+          }
+        }
       }
     );
     body.photo = true;
     World.add(engine.world, body);
   });
 
-  // Drift + mutual attraction
-  Events.on(engine,"beforeUpdate",()=>{
-    const bodies = Composite.allBodies(engine.world).filter(b=>b.photo);
-    bodies.forEach(a=>{
-      bodies.forEach(b=>{
-        if(a===b) return;
+  Events.on(engine, "beforeUpdate", () => {
+    const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
+    bodies.forEach(a => {
+      bodies.forEach(b => {
+        if (a === b) return;
         const dx = b.position.x - a.position.x;
         const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx,dy);
-        if(dist>0){
-          const strength = 0.000008;
-          const force = strength/(dist*dist);
-          Body.applyForce(a,a.position,{x:(dx/dist)*force, y:(dy/dist)*force});
-          if(dist<100) Body.applyForce(a,a.position,{x:-dx*0.0000008, y:-dy*0.0000008});
-        }
+        const d = Math.hypot(dx, dy) || 1;
+        const f = 0.000006 / (d * d);
+        Body.applyForce(a, a.position, { x: dx / d * f, y: dy / d * f });
       });
-      Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
     });
   });
 }
 </script>
+
 </body>
 </html>
