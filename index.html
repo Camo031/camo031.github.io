@@ -312,7 +312,7 @@ function startFunMode() {
       height: h, 
       wireframes: false, 
       background: "#111",
-      pixelRatio: window.devicePixelRatio || 1
+      pixelRatio: 1
     }
   });
 
@@ -330,8 +330,10 @@ function startFunMode() {
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  // Mouse
+  // Mouse - create after render is ready
   const mouse = Mouse.create(render.canvas);
+  Mouse.setScale(mouse, { x: 1, y: 1 });
+  
   const mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
     constraint: { stiffness: 0.8, render:{visible:false} }
