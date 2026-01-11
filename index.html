@@ -56,7 +56,7 @@ h1 a:hover, #return-btn:hover {
   font-size: 10px;
 }
 
-/* Masonry grid (no gaps) */
+/* Masonry grid */
 .gallery {
   column-count: 4;
   column-gap: 0;
@@ -73,6 +73,8 @@ h1 a:hover, #return-btn:hover {
 .gallery img {
   width: 100%;
   display: block;
+  pointer-events: none;
+  user-select: none;
 }
 
 @media (max-width: 768px) {
@@ -91,11 +93,9 @@ h1 a:hover, #return-btn:hover {
   right: 0;
   display: none;
   z-index: 100;
-  pointer-events: auto;
 }
 
 #physics-gallery canvas {
-  pointer-events: auto !important;
   cursor: grab;
 }
 
@@ -103,14 +103,11 @@ h1 a:hover, #return-btn:hover {
   cursor: grabbing;
 }
 
-/* About Me Page */
+/* About */
 #about-page {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: #000;
   z-index: 100;
   flex-direction: column;
@@ -119,91 +116,22 @@ h1 a:hover, #return-btn:hover {
   padding: 40px;
 }
 
-#about-page.active {
-  display: flex;
-}
+#about-page.active { display: flex; }
 
 #about-return {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 13px;
   color: #999;
   cursor: pointer;
   margin-bottom: 60px;
-  font-weight: 300;
-  letter-spacing: 0.3px;
-  transition: color 0.2s ease;
 }
 
-#about-return:hover {
-  color: #fff;
-}
+#about-return:hover { color: #fff; }
 
 #about-text {
   font-family: Georgia, serif;
-  color: #fff;
   font-size: 20px;
-  line-height: 1.8;
   max-width: 600px;
   text-align: center;
-}
-
-@media (max-width: 768px) {
-  #about-text {
-    font-size: 16px;
-    padding: 0 20px;
-  }
-}
-
-/* Disable right-click on images */
-.gallery img {
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.gallery a {
-  pointer-events: auto;
-}
-
-/* Allow interaction with physics canvas */
-#physics-gallery canvas {
-  pointer-events: auto !important;
-}
-
-/* Mobile fun mode header */
-.mobile-fun-header {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: #111;
-  padding: 20px;
-  z-index: 10;
-  text-align: center;
-}
-
-.mobile-fun-header span {
-  font-size: 14px;
-  color: #bbb;
-  cursor: pointer;
-  font-family: Arial, sans-serif;
-}
-
-@media (max-width: 768px) {
-  h1.fun-mode {
-    display: none;
-  }
-  
-  .mobile-fun-header.active {
-    display: block;
-  }
-  
-  #physics-gallery.mobile-active {
-    top: 60px;
-  }
 }
 
 footer {
@@ -212,29 +140,14 @@ footer {
   padding: 20px;
 }
 
-footer.hidden-copyright {
-  display: none;
-}
-
 #fun-btn {
   font-size: 12px;
   cursor: pointer;
-}
-
-#contact-container {
-  font-family: "Times New Roman", serif;
-  font-size: 8pt;
-  text-align: center;
-  margin-bottom: 30px;
 }
 </style>
 </head>
 
 <body>
-
-<div class="mobile-fun-header" id="mobile-header">
-  <span id="mobile-return-btn">return to normalcy</span>
-</div>
 
 <h1 id="main-header">
   <span>Camden Lethcoe</span>
@@ -248,78 +161,26 @@ footer.hidden-copyright {
   <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
 
-<!-- Static grid -->
+<!-- Static gallery -->
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% assign shuffled_photos = photos | sort: "name" %}
-{% for photo in shuffled_photos %}
-  <a href="{{ photo.path }}" data-lightbox="portfolio" data-order="{{ forloop.index }}">
+{% for photo in photos %}
+  <a href="{{ photo.path }}" data-lightbox="portfolio">
     <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
   </a>
 {% endfor %}
 </div>
 
-<!-- Fun mode -->
+<!-- Physics -->
 <div id="physics-gallery"></div>
-
-<!-- About Me Page -->
-<div id="about-page">
-  <div id="about-return">return</div>
-  <div id="about-text">
-    film photographer shooting 35mm on a Canon A-1 and a Praktica LB in the Pacific Northwest
-  </div>
-</div>
 
 <footer id="footer">
   <div id="fun-btn">click for fun</div>
   © <span id="y"></span> Camden Lethcoe
 </footer>
 
-<div id="contact-container">
-  <span id="contact-button">contact me</span>
-  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
-</div>
-
 <script>
 document.getElementById("y").textContent = new Date().getFullYear();
-document.getElementById("contact-button").onclick = () => {
-  document.getElementById("email").style.opacity = 1;
-};
-
-// Disable right-click context menu
-document.addEventListener('contextmenu', e => {
-  if (e.target.tagName === 'IMG' || e.target.closest('.gallery')) {
-    e.preventDefault();
-  }
-});
-
-// Disable dragging images
-document.addEventListener('dragstart', e => {
-  if (e.target.tagName === 'IMG') {
-    e.preventDefault();
-  }
-});
-
-// Randomize static gallery order on page load
-const gallery = document.getElementById("static-gallery");
-const items = Array.from(gallery.children);
-items.sort(() => Math.random() - 0.5);
-items.forEach(item => gallery.appendChild(item));
-
-// About Me page
-const aboutLink = document.getElementById("about-link");
-const aboutPage = document.getElementById("about-page");
-const aboutReturn = document.getElementById("about-return");
-
-aboutLink.onclick = () => {
-  aboutPage.classList.add("active");
-  document.body.style.overflow = "hidden";
-};
-
-aboutReturn.onclick = () => {
-  aboutPage.classList.remove("active");
-  document.body.style.overflow = "";
-};
 </script>
 
 <script>
@@ -330,40 +191,24 @@ const {
   Mouse, MouseConstraint, Composite, Events
 } = Matter;
 
-const isMobile = window.matchMedia("(max-width:768px)").matches;
-let engine, render, mouseConstraint;
+let engine, render;
 
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
-const mobileReturnBtn = document.getElementById("mobile-return-btn");
 const returnSep = document.getElementById("return-sep");
 const staticGallery = document.getElementById("static-gallery");
 const physicsGallery = document.getElementById("physics-gallery");
-const mainHeader = document.getElementById("main-header");
-const mobileHeader = document.getElementById("mobile-header");
-const footer = document.getElementById("footer");
 
 funBtn.onclick = () => {
   staticGallery.classList.add("hidden");
   funBtn.classList.add("hidden");
-  footer.classList.add("hidden-copyright");
   physicsGallery.style.display = "block";
-  document.body.style.overflow = "hidden";
-  
-  if (isMobile) {
-    mainHeader.classList.add("fun-mode");
-    mobileHeader.classList.add("active");
-    physicsGallery.classList.add("mobile-active");
-  } else {
-    returnBtn.classList.remove("hidden");
-    returnSep.classList.remove("hidden");
-  }
-  
+  returnBtn.classList.remove("hidden");
+  returnSep.classList.remove("hidden");
   initPhysics();
 };
 
 returnBtn.onclick = teardownPhysics;
-mobileReturnBtn.onclick = teardownPhysics;
 
 function teardownPhysics() {
   Render.stop(render);
@@ -371,15 +216,10 @@ function teardownPhysics() {
   Engine.clear(engine);
   render.canvas.remove();
   physicsGallery.style.display = "none";
-  physicsGallery.classList.remove("mobile-active");
   staticGallery.classList.remove("hidden");
   funBtn.classList.remove("hidden");
-  footer.classList.remove("hidden-copyright");
   returnBtn.classList.add("hidden");
   returnSep.classList.add("hidden");
-  mainHeader.classList.remove("fun-mode");
-  mobileHeader.classList.remove("active");
-  document.body.style.overflow = "";
 }
 
 function initPhysics() {
@@ -387,14 +227,12 @@ function initPhysics() {
   engine.gravity.x = 0;
   engine.gravity.y = 0;
 
-  const headerHeight = isMobile ? 60 : document.querySelector("h1").offsetHeight;
-
   render = Render.create({
     element: physicsGallery,
     engine,
     options: {
       width: window.innerWidth,
-      height: window.innerHeight - headerHeight,
+      height: window.innerHeight - 120,
       background: "#111",
       wireframes: false,
       pixelRatio: window.devicePixelRatio
@@ -407,115 +245,67 @@ function initPhysics() {
   const w = render.options.width;
   const h = render.options.height;
 
-  // Walls
   World.add(engine.world, [
-    Bodies.rectangle(w/2, -40, w, 80, { isStatic:true }),
-    Bodies.rectangle(w/2, h+40, w, 80, { isStatic:true }),
-    Bodies.rectangle(-40, h/2, 80, h, { isStatic:true }),
-    Bodies.rectangle(w+40, h/2, 80, h, { isStatic:true })
+    Bodies.rectangle(w/2, -50, w, 100, { isStatic:true }),
+    Bodies.rectangle(w/2, h+50, w, 100, { isStatic:true }),
+    Bodies.rectangle(-50, h/2, 100, h, { isStatic:true }),
+    Bodies.rectangle(w+50, h/2, 100, h, { isStatic:true })
   ]);
 
-  // Mouse constraint for dragging
+  /* ✅ FIXED MOUSE SCALING */
   const mouse = Mouse.create(render.canvas);
-  mouse.pixelRatio = window.devicePixelRatio;
-  
-  mouseConstraint = MouseConstraint.create(engine, {
-    mouse: mouse,
+  Mouse.setScale(mouse, {
+    x: 1 / window.devicePixelRatio,
+    y: 1 / window.devicePixelRatio
+  });
+
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse,
     constraint: {
-      stiffness: 0.8,
-      damping: 0.5,
+      stiffness: 0.9,
+      damping: 0.2,
       render: { visible: false }
     }
   });
-  
-  World.add(engine.world, mouseConstraint);
-  
-  // Keep the canvas mouse in sync with rendering
-  render.mouse = mouse;
-  
-  // Prevent scrolling on canvas
-  render.canvas.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-  });
-  render.canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-  });
 
-  // Photos
+  World.add(engine.world, mouseConstraint);
+  render.mouse = mouse;
+
   const photos = [
   {% for photo in photos %}
-    {
-      thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}"
-    },
+    "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
   {% endfor %}
   ];
 
-  photos.forEach(p => {
-    const current = Composite.allBodies(engine.world).filter(b => b.photo).length;
-    if (isMobile && current >= 30) return;
-
-    const size = isMobile ? 50 + Math.random()*20 : 90 + Math.random()*40;
-
+  photos.forEach(src => {
+    const size = 90 + Math.random() * 40;
     const body = Bodies.circle(
-      w*0.25 + Math.random()*w*0.5,
-      h*0.25 + Math.random()*h*0.5,
+      w/2 + Math.random()*200 - 100,
+      h/2 + Math.random()*200 - 100,
       size/2,
       {
-        restitution: 0.9,
-        frictionAir: 0.08,
-        friction: 0.1,
-        density: 0.001,
+        restitution: 0.95,
+        frictionAir: 0.05,
         render: {
           sprite: {
-            texture: p.thumb,
+            texture: src,
             xScale: size/400,
             yScale: size/400
           }
         }
       }
     );
-    body.photo = true;
     World.add(engine.world, body);
   });
 
-  /* Gentle drift + mutual gravitational attraction */
   Events.on(engine, "beforeUpdate", () => {
-    const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
-    
-    bodies.forEach(a => {
-      // Mutual gravitational attraction between photos
-      bodies.forEach(b => {
-        if (a === b) return;
-        
-        const dx = b.position.x - a.position.x;
-        const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx, dy);
-        
-        if (dist > 0) {
-          // Gravitational force (attractive)
-          const strength = 0.000008;
-          const force = strength / (dist * dist);
-          
-          Body.applyForce(a, a.position, {
-            x: (dx / dist) * force,
-            y: (dy / dist) * force
-          });
-          
-          // Slight repulsion when very close to prevent clumping
-          if (dist < 100) {
-            Body.applyForce(a, a.position, {
-              x: -dx * 0.0000008,
-              y: -dy * 0.0000008
-            });
-          }
-        }
-      });
-
-      // Gentle random drift
-      Body.applyForce(a, a.position, {
-        x: (Math.random() - 0.5) * 0.00003,
-        y: (Math.random() - 0.5) * 0.00003
-      });
+    Composite.allBodies(engine.world).forEach(b => {
+      if (!b.isStatic) {
+        Body.applyForce(b, b.position, {
+          x: (Math.random() - 0.5) * 0.00002,
+          y: (Math.random() - 0.5) * 0.00002
+        });
+      }
     });
   });
 }
