@@ -71,7 +71,7 @@ h1 a, #return-btn {
 /* Physics canvas */
 #physics-gallery {
   position: fixed;
-  top: 0;
+  top: 120px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -152,8 +152,9 @@ footer {
 <!-- Static grid -->
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% for photo in photos %}
-  <a href="{{ photo.path }}" data-lightbox="portfolio">
+{% assign shuffled_photos = photos | sort: "name" %}
+{% for photo in shuffled_photos %}
+  <a href="{{ photo.path }}" data-lightbox="portfolio" data-order="{{ forloop.index }}">
     <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
   </a>
 {% endfor %}
@@ -177,6 +178,12 @@ document.getElementById("y").textContent = new Date().getFullYear();
 document.getElementById("contact-button").onclick = () => {
   document.getElementById("email").style.opacity = 1;
 };
+
+// Randomize static gallery order on page load
+const gallery = document.getElementById("static-gallery");
+const items = Array.from(gallery.children);
+items.sort(() => Math.random() - 0.5);
+items.forEach(item => gallery.appendChild(item));
 </script>
 
 <script>
