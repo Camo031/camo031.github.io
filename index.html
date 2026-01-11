@@ -37,17 +37,6 @@ h1.fun-mode {
   pointer-events: none;
 }
 
-h1 a, #return-btn {
-  font-size: 13px;
-  color: #999;
-  text-decoration: none;
-  cursor: pointer;
-  font-weight: 300;
-}
-
-h1 a:hover, #return-btn:hover { color: #fff; }
-.separator { color: #666; font-size: 10px; }
-
 .gallery {
   column-count: 4;
   column-gap: 0;
@@ -110,22 +99,39 @@ footer.hidden-copyright { display: none; }
 
 <h1 id="main-header">
   <span>Camden Lethcoe</span>
-  <span class="separator">|</span>
-  <a href="https://instagram.com/ensembleofthings" target="_blank">instagram</a>
-  <span class="separator">|</span>
-  <a href="mailto:cam@lethcoe.pics">email</a>
 </h1>
 
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% assign bottom = photos | where_exp:"f","f.name contains '000986310012_result' or f.name contains '000986320014_result'" %}
-{% assign rest = photos | where_exp:"f","f.name != '000986310012_result.jpg' and f.name != '000986320014_result.jpg'" | sort: "name" %}
-{% for photo in rest %}
+{% assign special_names = "000986310012_result,000986320014_result" | split: "," %}
+
+{% assign normal_photos = "" | split: "" %}
+{% assign bottom_photos = "" | split: "" %}
+
+{% for photo in photos %}
+  {% assign is_special = false %}
+  {% for name in special_names %}
+    {% if photo.name contains name %}
+      {% assign is_special = true %}
+    {% endif %}
+  {% endfor %}
+
+  {% if is_special %}
+    {% assign bottom_photos = bottom_photos | push: photo %}
+  {% else %}
+    {% assign normal_photos = normal_photos | push: photo %}
+  {% endif %}
+{% endfor %}
+
+{% assign normal_photos = normal_photos | sort: "name" %}
+
+{% for photo in normal_photos %}
 <a href="{{ photo.path }}" data-lightbox="portfolio">
   <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
 </a>
 {% endfor %}
-{% for photo in bottom %}
+
+{% for photo in bottom_photos %}
 <a href="{{ photo.path }}" data-lightbox="portfolio">
   <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
 </a>
@@ -239,7 +245,7 @@ function initPhysics(){
   {% for photo in photos %}
     {
       thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
-      bottom: {{ photo.name contains '000986310012_result' or photo.name contains '000986320014_result' }}
+      bottom: {% if photo.name contains "000986310012_result" or photo.name contains "000986320014_result" %}true{% else %}false{% endif %}
     },
   {% endfor %}
   ];
