@@ -49,7 +49,10 @@ h1 a:hover, #return-btn:hover {
   color: #fff;
 }
 
-.separator { color: #666; }
+.separator { 
+  color: #666;
+  font-size: 10px;
+}
 
 /* Masonry grid (no gaps) */
 .gallery {
@@ -110,6 +113,57 @@ footer.hidden-copyright {
   margin-bottom: 30px;
 }
 
+/* About Me Page */
+#about-page {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+#about-page.active {
+  display: flex;
+}
+
+#about-return {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  color: #999;
+  cursor: pointer;
+  margin-bottom: 60px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+#about-return:hover {
+  color: #fff;
+}
+
+#about-text {
+  font-family: Georgia, serif;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.8;
+  max-width: 600px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  #about-text {
+    font-size: 16px;
+    padding: 0 20px;
+  }
+}
+
 /* Mobile fun mode header */
 .mobile-fun-header {
   display: none;
@@ -158,6 +212,8 @@ footer.hidden-copyright {
   <a href="https://instagram.com/ensembleofthings" target="_blank">Instagram</a>
   <span class="separator">|</span>
   <a href="mailto:cam@lethcoe.pics">Email</a>
+  <span class="separator">|</span>
+  <a id="about-link">About Me</a>
   <span class="separator hidden" id="return-sep">|</span>
   <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
@@ -175,6 +231,14 @@ footer.hidden-copyright {
 
 <!-- Fun mode -->
 <div id="physics-gallery"></div>
+
+<!-- About Me Page -->
+<div id="about-page">
+  <div id="about-return">return</div>
+  <div id="about-text">
+    film photographer shooting on a Canon A-1 and a Praktica LB, primarily in the Seattle area and Pacific Northwest. leave me an instagram message or email for any inquiries.
+  </div>
+</div>
 
 <footer id="footer">
   <div id="fun-btn">click for fun</div>
@@ -197,6 +261,21 @@ const gallery = document.getElementById("static-gallery");
 const items = Array.from(gallery.children);
 items.sort(() => Math.random() - 0.5);
 items.forEach(item => gallery.appendChild(item));
+
+// About Me page
+const aboutLink = document.getElementById("about-link");
+const aboutPage = document.getElementById("about-page");
+const aboutReturn = document.getElementById("about-return");
+
+aboutLink.onclick = () => {
+  aboutPage.classList.add("active");
+  document.body.style.overflow = "hidden";
+};
+
+aboutReturn.onclick = () => {
+  aboutPage.classList.remove("active");
+  document.body.style.overflow = "";
+};
 </script>
 
 <script>
