@@ -9,9 +9,9 @@ layout: null
 <title>Camden Lethcoe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Lightbox -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
 <style>
 body {
@@ -40,11 +40,7 @@ h1 a, #about-link {
 }
 
 h1 a:hover, #about-link:hover { color: #fff; }
-
-.separator {
-  color: #666;
-  font-size: 10px;
-}
+.separator { color: #666; font-size: 10px; }
 
 .gallery {
   column-count: 4;
@@ -68,49 +64,63 @@ h1 a:hover, #about-link:hover { color: #fff; }
   .gallery { column-count: 2; }
 }
 
-/* About page */
+/* About overlay */
 #about-page {
   display: none;
   position: fixed;
   inset: 0;
   background: #000;
   z-index: 100;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  flex-direction: column;
 }
 
-#about-page.active {
-  display: flex;
-}
+#about-page.active { display: flex; }
 
 #about-return {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 13px;
   color: #999;
   cursor: pointer;
   margin-bottom: 60px;
-  font-weight: 300;
-  letter-spacing: 0.3px;
 }
 
 #about-return:hover { color: #fff; }
 
 #about-text {
   font-family: Georgia, serif;
-  color: #fff;
   font-size: 20px;
-  line-height: 1.8;
   max-width: 600px;
   text-align: center;
+  line-height: 1.8;
 }
 
-@media (max-width: 768px) {
-  #about-text {
-    font-size: 16px;
-    padding: 0 20px;
-  }
+/* Fun button */
+#fun-trigger {
+  display: none;
+  text-align: center;
+  margin: 40px 0 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #bbb;
+}
+
+/* Fun mode */
+#fun-mode {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 200;
+}
+
+#fun-top {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  cursor: pointer;
 }
 
 footer {
@@ -118,13 +128,6 @@ footer {
   color: #bbb;
   padding: 20px;
   font-size: 12px;
-}
-
-#contact-container {
-  font-family: "Times New Roman", serif;
-  font-size: 8pt;
-  text-align: center;
-  margin-bottom: 30px;
 }
 </style>
 </head>
@@ -141,10 +144,9 @@ footer {
   <span id="about-link">about me</span>
 </h1>
 
-<div class="gallery">
+<div class="gallery" id="gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
 {% assign special_names = "000986310012_result,000986320014_result" | split: "," %}
-
 {% assign normal = "" | split: "" %}
 {% assign bottom = "" | split: "" %}
 
@@ -155,7 +157,6 @@ footer {
       {% assign is_special = true %}
     {% endif %}
   {% endfor %}
-
   {% if is_special %}
     {% assign bottom = bottom | push: photo %}
   {% else %}
@@ -166,19 +167,23 @@ footer {
 {% assign normal = normal | shuffle %}
 
 {% for photo in normal %}
-  <a href="{{ photo.path }}" data-lightbox="portfolio">
-    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
-  </a>
+<a href="{{ photo.path }}" data-lightbox="portfolio">
+  <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
+</a>
 {% endfor %}
-
 {% for photo in bottom %}
-  <a href="{{ photo.path }}" data-lightbox="portfolio">
-    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
-  </a>
+<a href="{{ photo.path }}" data-lightbox="portfolio">
+  <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
+</a>
 {% endfor %}
 </div>
 
-<!-- About overlay -->
+<div id="fun-trigger">click for fun</div>
+
+<footer>
+  © <span id="y"></span> Camden Lethcoe
+</footer>
+
 <div id="about-page">
   <div id="about-return">return</div>
   <div id="about-text">
@@ -186,43 +191,120 @@ footer {
   </div>
 </div>
 
-<footer>
-  © <span id="y"></span> Camden Lethcoe
-</footer>
-
-<div id="contact-container">
-  <span id="contact-button">contact me</span>
-  <span id="email" style="opacity:0;"> cam@lethcoe.pics</span>
+<div id="fun-mode">
+  <div id="fun-top">return to normalcy</div>
 </div>
 
 <script>
+/* year */
 document.getElementById("y").textContent = new Date().getFullYear();
 
-document.getElementById("contact-button").onclick = () => {
-  document.getElementById("email").style.opacity = 1;
-};
-
+/* about */
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
-const aboutReturn = document.getElementById("about-return");
-
+document.getElementById("about-return").onclick = () => {
+  aboutPage.classList.remove("active");
+  document.body.style.overflow = "";
+};
 aboutLink.onclick = () => {
   aboutPage.classList.add("active");
   document.body.style.overflow = "hidden";
 };
 
-aboutReturn.onclick = () => {
-  aboutPage.classList.remove("active");
-  document.body.style.overflow = "";
+/* show fun button near bottom */
+const funTrigger = document.getElementById("fun-trigger");
+window.addEventListener("scroll", () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+    funTrigger.style.display = "block";
+  }
+});
+
+/* subtle color clustering */
+window.addEventListener("load", () => {
+  const items = Array.from(document.querySelectorAll("#gallery a"));
+  const buckets = [[],[],[],[],[]];
+
+  items.forEach(el => {
+    const img = el.querySelector("img");
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("2d");
+    c.width = 20; c.height = 20;
+    ctx.drawImage(img, 0, 0, 20, 20);
+    const d = ctx.getImageData(0,0,20,20).data;
+    let sum = 0;
+    for(let i=0;i<d.length;i+=4){
+      sum += (d[i] + d[i+1] + d[i+2]) / 3;
+    }
+    const avg = sum / (d.length/4);
+    const bucket = Math.min(4, Math.floor(avg / 51));
+    buckets[bucket].push(el);
+  });
+
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+  buckets.forEach(b => b.sort(()=>Math.random()-0.5).forEach(el => gallery.appendChild(el)));
+});
+
+/* fun mode physics */
+const funMode = document.getElementById("fun-mode");
+const funTop = document.getElementById("fun-top");
+let engine, render;
+
+funTrigger.onclick = () => {
+  document.body.style.overflow = "hidden";
+  funMode.style.display = "block";
+
+  engine = Matter.Engine.create();
+  engine.gravity.y = 0;
+
+  render = Matter.Render.create({
+    element: funMode,
+    engine,
+    options: {
+      width: window.innerWidth,
+      height: window.innerHeight - 60,
+      background: "#000",
+      wireframes: false
+    }
+  });
+
+  Matter.Render.run(render);
+  Matter.Engine.run(engine);
+
+  const mouse = Matter.Mouse.create(render.canvas);
+  const mc = Matter.MouseConstraint.create(engine, { mouse });
+  Matter.World.add(engine.world, mc);
+
+  Matter.World.add(engine.world, [
+    Matter.Bodies.rectangle(window.innerWidth/2, -50, window.innerWidth, 100, { isStatic:true }),
+    Matter.Bodies.rectangle(window.innerWidth/2, window.innerHeight, window.innerWidth, 100, { isStatic:true }),
+    Matter.Bodies.rectangle(-50, window.innerHeight/2, 100, window.innerHeight, { isStatic:true }),
+    Matter.Bodies.rectangle(window.innerWidth+50, window.innerHeight/2, 100, window.innerHeight, { isStatic:true })
+  ]);
+
+  document.querySelectorAll("#gallery img").forEach(img => {
+    const size = 90;
+    const body = Matter.Bodies.circle(
+      Math.random()*window.innerWidth,
+      Math.random()*window.innerHeight,
+      size/2,
+      {
+        restitution: 0.9,
+        frictionAir: 0.02,
+        render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
+      }
+    );
+    Matter.World.add(engine.world, body);
+  });
 };
 
-document.addEventListener('contextmenu', e => {
-  if (e.target.tagName === 'IMG') e.preventDefault();
-});
-
-document.addEventListener('dragstart', e => {
-  if (e.target.tagName === 'IMG') e.preventDefault();
-});
+funTop.onclick = () => {
+  Matter.Render.stop(render);
+  Matter.Engine.clear(engine);
+  render.canvas.remove();
+  funMode.style.display = "none";
+  document.body.style.overflow = "";
+};
 </script>
 
 </body>
