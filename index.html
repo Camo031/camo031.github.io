@@ -9,10 +9,6 @@ layout: null
 <title>Camden Lethcoe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Lightbox -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
-
 <!-- Matter.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 
@@ -22,6 +18,7 @@ body {
   background: #111;
   color: #fff;
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -32,8 +29,8 @@ h1 {
   gap: 20px;
   flex-wrap: wrap;
   align-items: baseline;
-  z-index: 10;
   position: relative;
+  z-index: 10;
 }
 
 h1 a, #return-btn {
@@ -57,11 +54,16 @@ h1 a:hover, #return-btn:hover {
   margin: 0 auto;
 }
 
-.gallery a { display: block; break-inside: avoid; }
+.gallery a {
+  display: block;
+  break-inside: avoid;
+}
+
 .gallery img {
   width: 100%;
   display: block;
   pointer-events: none;
+  user-select: none;
 }
 
 .hidden { display: none !important; }
@@ -69,10 +71,11 @@ h1 a:hover, #return-btn:hover {
 #physics-gallery {
   position: fixed;
   top: 120px;
-  inset-inline: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
-  display: none;
   z-index: 100;
+  display: none;
 }
 
 #physics-gallery canvas {
@@ -98,14 +101,12 @@ footer {
 
 <body>
 
-<h1 id="main-header">
+<h1>
   <span>Camden Lethcoe</span>
   <span class="separator">|</span>
   <a href="https://instagram.com/ensembleofthings" target="_blank">instagram</a>
   <span class="separator">|</span>
   <a href="mailto:cam@lethcoe.pics">email</a>
-  <span class="separator">|</span>
-  <a id="about-link">about me</a>
   <span class="separator hidden" id="return-sep">|</span>
   <span id="return-btn" class="hidden">return to normalcy</span>
 </h1>
@@ -114,7 +115,7 @@ footer {
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
 {% for photo in photos %}
-  <a href="{{ photo.path }}" data-lightbox="portfolio">
+  <a href="{{ photo.path }}">
     <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
   </a>
 {% endfor %}
@@ -123,7 +124,7 @@ footer {
 <!-- Physics gallery -->
 <div id="physics-gallery"></div>
 
-<footer id="footer">
+<footer>
   <div id="fun-btn">click for fun</div>
   © <span id="y"></span> Camden Lethcoe
 </footer>
@@ -133,6 +134,8 @@ document.getElementById("y").textContent = new Date().getFullYear();
 </script>
 
 <script>
+/* ================= MATTER SETUP ================= */
+
 const {
   Engine, Render, World, Bodies, Body,
   Mouse, MouseConstraint, Composite, Events
@@ -191,17 +194,22 @@ function initPhysics() {
   Render.run(render);
   Engine.run(engine);
 
+  /* 🚫 CRITICAL: disable native canvas dragging + export */
+  render.canvas.draggable = false;
+  render.canvas.addEventListener("dragstart", e => e.preventDefault());
+  render.canvas.addEventListener("contextmenu", e => e.preventDefault());
+
   const w = render.options.width;
   const h = render.options.height;
 
   World.add(engine.world, [
-    Bodies.rectangle(w/2, -50, w, 100, { isStatic:true }),
-    Bodies.rectangle(w/2, h+50, w, 100, { isStatic:true }),
-    Bodies.rectangle(-50, h/2, 100, h, { isStatic:true }),
-    Bodies.rectangle(w+50, h/2, 100, h, { isStatic:true })
+    Bodies.rectangle(w/2, -50, w, 100, { isStatic: true }),
+    Bodies.rectangle(w/2, h+50, w, 100, { isStatic: true }),
+    Bodies.rectangle(-50, h/2, 100, h, { isStatic: true }),
+    Bodies.rectangle(w+50, h/2, 100, h, { isStatic: true })
   ]);
 
-  /* ✅ CORRECT MOUSE SETUP (DESKTOP FIX) */
+  /* ✅ CORRECT MOUSE */
   const mouse = Mouse.create(render.canvas);
 
   Mouse.setScale(mouse, {
@@ -212,8 +220,8 @@ function initPhysics() {
   const mouseConstraint = MouseConstraint.create(engine, {
     mouse,
     constraint: {
-      stiffness: 0.9,
-      damping: 0.2,
+      stiffness: 0.85,
+      damping: 0.15,
       render: { visible: false }
     }
   });
@@ -221,6 +229,7 @@ function initPhysics() {
   World.add(engine.world, mouseConstraint);
   render.mouse = mouse;
 
+  /* Photos */
   const photos = [
   {% for photo in photos %}
     "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
@@ -231,12 +240,12 @@ function initPhysics() {
     const size = 90 + Math.random() * 40;
 
     const body = Bodies.circle(
-      w/2 + Math.random()*300 - 150,
-      h/2 + Math.random()*300 - 150,
-      size/2,
+      w / 2 + Math.random() * 300 - 150,
+      h / 2 + Math.random() * 300 - 150,
+      size / 2,
       {
         restitution: 0.95,
-        frictionAir: 0.05,
+        frictionAir: 0.06,
         density: 0.001,
         render: {
           sprite: {
@@ -252,15 +261,16 @@ function initPhysics() {
     World.add(engine.world, body);
   });
 
+  /* Gentle drift */
   Events.on(engine, "beforeUpdate", () => {
-    const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
-
-    bodies.forEach(a => {
-      Body.applyForce(a, a.position, {
-        x: (Math.random() - 0.5) * 0.00002,
-        y: (Math.random() - 0.5) * 0.00002
+    Composite.allBodies(engine.world)
+      .filter(b => b.photo)
+      .forEach(b => {
+        Body.applyForce(b, b.position, {
+          x: (Math.random() - 0.5) * 0.00002,
+          y: (Math.random() - 0.5) * 0.00002
+        });
       });
-    });
   });
 }
 </script>
