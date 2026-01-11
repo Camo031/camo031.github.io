@@ -61,16 +61,8 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   margin: 0 auto;
 }
 
-.gallery a {
-  display: block;
-  width: 100%;
-  break-inside: avoid;
-}
-
-.gallery img {
-  width: 100%;
-  display: block;
-}
+.gallery a { display: block; width: 100%; break-inside: avoid; }
+.gallery img { width: 100%; display: block; }
 
 @media (max-width: 768px) {
   h1 { font-size: 32px; }
@@ -87,6 +79,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   bottom: 0;
   display: none;
   z-index: 100;
+  border: 1px solid #111; /* invisible border matching background */
 }
 
 #physics-gallery canvas {
@@ -99,9 +92,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   cursor: grab;
 }
 
-#physics-gallery canvas:active {
-  cursor: grabbing;
-}
+#physics-gallery canvas:active { cursor: grabbing; }
 
 #about-page {
   display: none;
@@ -144,17 +135,17 @@ footer {
   z-index: 10;
 }
 
-#fun-btn {
-  font-size: 12px;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
+#fun-btn { font-size: 12px; cursor: pointer; margin-bottom: 10px; }
 
 #contact-container {
   font-family: "Times New Roman", serif;
   font-size: 8pt;
   text-align: center;
   margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  #fun-btn { display: none; } /* hide fun button on mobile */
 }
 </style>
 </head>
@@ -214,17 +205,14 @@ document.addEventListener("dragstart", e => { if(e.target.tagName === "IMG") e.p
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
-
 aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow = "hidden"; };
 aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow = ""; };
 
 /* ---------- Random order + bottom images ---------- */
 const gallery = document.getElementById("static-gallery");
 const items = Array.from(gallery.children);
-
 const bottomNames = ["000986310012_result","000986320014_result"];
-const bottom = [];
-const normal = [];
+const bottom = [], normal = [];
 
 items.forEach(el => {
   const name = el.dataset.name || "";
@@ -247,14 +235,7 @@ const physicsGallery = document.getElementById("physics-gallery");
 
 let engine, world, bodies = [];
 
-funBtn.onclick = () => {
-  staticGalleryEl.classList.add("hidden");
-  funBtn.classList.add("hidden");
-  returnBtn.classList.remove("hidden");
-  physicsGallery.style.display = "block";
-  document.body.style.overflow = "hidden";
-  initPhysics();
-};
+funBtn.onclick = () => startFunMode();
 
 returnBtn.onclick = () => {
   if(engine) Matter.World.clear(world);
@@ -267,15 +248,20 @@ returnBtn.onclick = () => {
   document.body.style.overflow = "";
 };
 
-function initPhysics() {
-  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
+function startFunMode() {
+  staticGalleryEl.classList.add("hidden");
+  funBtn.classList.add("hidden");
+  returnBtn.classList.remove("hidden");
+  physicsGallery.style.display = "block";
+  document.body.style.overflow = "hidden";
 
+  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
   engine = Engine.create();
   world = engine.world;
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - document.querySelector("h1").offsetHeight - 60;
+  const h = window.innerHeight - document.querySelector("h1").offsetHeight - 10;
 
   const render = Render.create({
     element: physicsGallery,
@@ -303,8 +289,12 @@ function initPhysics() {
   World.add(world, mouseConstraint);
   render.mouse = mouse;
 
-  // Load images as textures
-  const imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
+  // Load images
+  let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
+
+  // Reduce number of images on mobile
+  if(window.innerWidth <= 768) imgElements = imgElements.slice(0, Math.ceil(imgElements.length/3));
+
   bodies = [];
   const promises = imgElements.map(imgEl => new Promise(resolve => {
     const img = new Image();
@@ -314,7 +304,7 @@ function initPhysics() {
 
   Promise.all(promises).then(images => {
     images.forEach((img, i) => {
-      const size = 90 + Math.random()*40;
+      const size = 70 + Math.random()*40;
       const name = imgElements[i].parentElement.dataset.name;
       const isBottom = bottomNames.some(n => name.includes(n));
       const x = Math.random()*(w-100)+50;
@@ -329,7 +319,6 @@ function initPhysics() {
       World.add(world, body);
     });
 
-    // Attraction + drift
     Events.on(engine,"beforeUpdate",()=>{
       bodies.forEach(a=>{
         bodies.forEach(b=>{
