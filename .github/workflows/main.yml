@@ -1,0 +1,37 @@
+name: Generate Thumbnails
+
+on:
+  push:
+    paths:
+      - "photos/**"     # only run when photos change
+  workflow_dispatch:    # lets you trigger manually too
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+    - name: Generate thumbnails
+      run: |
+        mkdir -p thumbnails
+        for img in photos/*.{jpg,jpeg,png}; do
+          [ -e "$img" ] || continue
+          filename=$(basename "$img")
+          convert "$img" -resize 400x -quality 75 "thumbnails/$filename"
+        done
+
+    - name: Commit and push thumbnails
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add thumbnails
+        if ! git diff --cached --quiet; then
+          git commit -m "Auto-generate thumbnails"
+          git push
+        fi
