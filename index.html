@@ -10,7 +10,6 @@ layout: null
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Favicon -->
-<!-- Place favicon.png in the root folder (same as index.html) -->
 <link rel="icon" type="image/png" href="/favicon.png">
 
 <!-- Lightbox -->
@@ -208,26 +207,16 @@ document.getElementById("y").textContent = new Date().getFullYear();
 document.getElementById("contact-button").onclick = () => {
   document.getElementById("email").style.opacity = 1;
 };
-document.addEventListener("contextmenu", e => {
-  if (e.target.tagName === "IMG") e.preventDefault();
-});
-document.addEventListener("dragstart", e => {
-  if (e.target.tagName === "IMG") e.preventDefault();
-});
+document.addEventListener("contextmenu", e => { if(e.target.tagName === "IMG") e.preventDefault(); });
+document.addEventListener("dragstart", e => { if(e.target.tagName === "IMG") e.preventDefault(); });
 
 /* ---------- About ---------- */
 const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
 
-aboutLink.onclick = () => {
-  aboutPage.classList.add("active");
-  document.body.style.overflow = "hidden";
-};
-aboutReturn.onclick = () => {
-  aboutPage.classList.remove("active");
-  document.body.style.overflow = "";
-};
+aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow = "hidden"; };
+aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow = ""; };
 
 /* ---------- Random order + bottom images ---------- */
 const gallery = document.getElementById("static-gallery");
@@ -239,12 +228,12 @@ const normal = [];
 
 items.forEach(el => {
   const name = el.dataset.name || "";
-  if (bottomNames.some(n => name.includes(n))) bottom.push(el);
+  if(bottomNames.some(n => name.includes(n))) bottom.push(el);
   else normal.push(el);
 });
 
-normal.sort(() => Math.random() - 0.5);
-bottom.sort(() => Math.random() - 0.5);
+normal.sort(() => Math.random()-0.5);
+bottom.sort(() => Math.random()-0.5);
 
 gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
@@ -264,7 +253,6 @@ funBtn.onclick = () => {
   returnBtn.classList.remove("hidden");
   physicsGallery.style.display = "block";
   document.body.style.overflow = "hidden";
-
   initPhysics();
 };
 
@@ -280,7 +268,7 @@ returnBtn.onclick = () => {
 };
 
 function initPhysics() {
-  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Composite } = Matter;
+  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
 
   engine = Engine.create();
   world = engine.world;
@@ -308,40 +296,52 @@ function initPhysics() {
 
   // Mouse
   const mouse = Mouse.create(render.canvas);
-  const mouseConstraint = MouseConstraint.create(engine, { mouse: mouse, constraint: { stiffness: 0.8, render:{visible:false} } });
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse: mouse,
+    constraint: { stiffness: 0.8, render:{visible:false} }
+  });
   World.add(world, mouseConstraint);
   render.mouse = mouse;
 
-  // Images
-  const imgs = document.querySelectorAll("#static-gallery img");
-  imgs.forEach(img => {
-    const size = 90 + Math.random()*40;
-    const isBottom = bottomNames.some(n => img.parentElement.dataset.name.includes(n));
-    const yPos = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
-    const xPos = Math.random()*(w-100)+50;
+  // Load images as textures
+  const imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
+  bodies = [];
+  const promises = imgElements.map(imgEl => new Promise(resolve => {
+    const img = new Image();
+    img.src = imgEl.src;
+    img.onload = () => resolve(img);
+  }));
 
-    const body = Bodies.circle(xPos, yPos, size/2, {
-      restitution: 0.9,
-      frictionAir: 0.06,
-      render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
+  Promise.all(promises).then(images => {
+    images.forEach((img, i) => {
+      const size = 90 + Math.random()*40;
+      const name = imgElements[i].parentElement.dataset.name;
+      const isBottom = bottomNames.some(n => name.includes(n));
+      const x = Math.random()*(w-100)+50;
+      const y = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
+
+      const body = Bodies.circle(x, y, size/2, {
+        restitution: 0.9,
+        frictionAir: 0.06,
+        render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
+      });
+      bodies.push(body);
+      World.add(world, body);
     });
 
-    bodies.push(body);
-    World.add(world, body);
-  });
-
-  // Attraction + drift
-  Events.on(engine,"beforeUpdate",()=>{
-    bodies.forEach(a=>{
-      bodies.forEach(b=>{
-        if(a===b) return;
-        const dx = b.position.x - a.position.x;
-        const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx,dy)||1;
-        const f = 0.000006/(dist*dist);
-        Body.applyForce(a,a.position,{x:dx/dist*f, y:dy/dist*f});
+    // Attraction + drift
+    Events.on(engine,"beforeUpdate",()=>{
+      bodies.forEach(a=>{
+        bodies.forEach(b=>{
+          if(a===b) return;
+          const dx = b.position.x - a.position.x;
+          const dy = b.position.y - a.position.y;
+          const dist = Math.hypot(dx,dy)||1;
+          const f = 0.000006/(dist*dist);
+          Body.applyForce(a,a.position,{x:dx/dist*f, y:dy/dist*f});
+        });
+        Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
       });
-      Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
     });
   });
 }
