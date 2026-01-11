@@ -32,6 +32,8 @@ h1 {
   gap: 20px;
   flex-wrap: wrap;
   align-items: baseline;
+  position: relative;
+  z-index: 10;
 }
 
 h1 a, #return-btn {
@@ -88,7 +90,17 @@ h1 a:hover, #return-btn:hover {
   left: 0;
   right: 0;
   display: none;
-  z-index: 1;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+#physics-gallery canvas {
+  pointer-events: auto !important;
+  cursor: grab;
+}
+
+#physics-gallery canvas:active {
+  cursor: grabbing;
 }
 
 /* About Me Page */
@@ -405,11 +417,13 @@ function initPhysics() {
 
   // Mouse constraint for dragging
   const mouse = Mouse.create(render.canvas);
+  mouse.pixelRatio = window.devicePixelRatio;
+  
   mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
     constraint: {
       stiffness: 0.8,
-      damping: 0.3,
+      damping: 0.5,
       render: { visible: false }
     }
   });
@@ -420,8 +434,12 @@ function initPhysics() {
   render.mouse = mouse;
   
   // Prevent scrolling on canvas
-  mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
-  mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel);
+  render.canvas.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+  });
+  render.canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+  });
 
   // Photos
   const photos = [
