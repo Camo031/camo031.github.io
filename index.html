@@ -6,12 +6,12 @@ layout: null
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Camden Lethcoe</title>
+<title>lethcoe.pics</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Favicon -->
-<!-- Place your favicon.ico or favicon.png in the root of your repo (same folder as index.html) -->
-<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<!-- Place favicon.png in the root folder (same as index.html) -->
+<link rel="icon" type="image/png" href="/favicon.png">
 
 <!-- Lightbox -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
@@ -82,12 +82,26 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 
 #physics-gallery {
   position: fixed;
-  top: 60px; /* below header */
+  top: 60px;
   left: 0;
   right: 0;
-  bottom: 0; /* stops above footer automatically */
+  bottom: 0;
   display: none;
   z-index: 100;
+}
+
+#physics-gallery canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+#physics-gallery canvas:active {
+  cursor: grabbing;
 }
 
 #about-page {
@@ -273,7 +287,7 @@ function initPhysics() {
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - document.querySelector("h1").offsetHeight - 60; // leave footer space
+  const h = window.innerHeight - document.querySelector("h1").offsetHeight - 60;
 
   const render = Render.create({
     element: physicsGallery,
@@ -301,14 +315,12 @@ function initPhysics() {
   // Images
   const imgs = document.querySelectorAll("#static-gallery img");
   imgs.forEach(img => {
-    const rect = img.getBoundingClientRect();
     const size = 90 + Math.random()*40;
-
-    // Determine if it's one of the two bottom images
     const isBottom = bottomNames.some(n => img.parentElement.dataset.name.includes(n));
     const yPos = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
+    const xPos = Math.random()*(w-100)+50;
 
-    const body = Bodies.circle(rect.left + size/2, yPos, size/2, {
+    const body = Bodies.circle(xPos, yPos, size/2, {
       restitution: 0.9,
       frictionAir: 0.06,
       render: { sprite: { texture: img.src, xScale: size/400, yScale: size/400 } }
@@ -318,7 +330,7 @@ function initPhysics() {
     World.add(world, body);
   });
 
-  // Small attraction + drift
+  // Attraction + drift
   Events.on(engine,"beforeUpdate",()=>{
     bodies.forEach(a=>{
       bodies.forEach(b=>{
