@@ -25,12 +25,8 @@ h1 {
   margin: 20px;
   font-family: Georgia, serif;
   font-size: 48px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  align-items: baseline;
   position: relative;
-  z-index: 10;
+  z-index: 5;
 }
 
 h1.fun-mode {
@@ -44,8 +40,15 @@ h1.fun-mode {
   margin: 0 auto;
 }
 
-.gallery a { display: block; break-inside: avoid; }
-.gallery img { width: 100%; display: block; }
+.gallery a {
+  display: block;
+  break-inside: avoid;
+}
+
+.gallery img {
+  width: 100%;
+  display: block;
+}
 
 @media (max-width: 768px) {
   h1 { font-size: 32px; }
@@ -59,18 +62,30 @@ h1.fun-mode {
   inset: 0;
   background: #111;
   display: none;
-  z-index: 50;
+  z-index: 20;
 }
 
 #physics-gallery canvas {
   cursor: grab;
 }
-#physics-gallery canvas:active { cursor: grabbing; }
+#physics-gallery canvas:active {
+  cursor: grabbing;
+}
 
-footer { text-align: center; color: #bbb; padding: 20px; }
-footer.hidden-copyright { display: none; }
+footer {
+  text-align: center;
+  color: #bbb;
+  padding: 20px;
+}
 
-#fun-btn { font-size: 12px; cursor: pointer; }
+footer.hidden {
+  display: none;
+}
+
+#fun-btn {
+  font-size: 12px;
+  cursor: pointer;
+}
 
 .mobile-fun-header {
   display: none;
@@ -80,10 +95,12 @@ footer.hidden-copyright { display: none; }
   background: #111;
   padding: 20px;
   text-align: center;
-  z-index: 100;
+  z-index: 30;
 }
 
-.mobile-fun-header.active { display: block; }
+.mobile-fun-header.active {
+  display: block;
+}
 
 @media (max-width: 768px) {
   h1.fun-mode { display: none; }
@@ -94,44 +111,43 @@ footer.hidden-copyright { display: none; }
 <body>
 
 <div class="mobile-fun-header" id="mobile-header">
-  <span id="mobile-return-btn">return to normalcy</span>
+  <span id="mobile-return">return to normalcy</span>
 </div>
 
-<h1 id="main-header">
-  <span>Camden Lethcoe</span>
-</h1>
+<h1 id="main-header">Camden Lethcoe</h1>
 
 <div class="gallery" id="static-gallery">
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
-{% assign special_names = "000986310012_result,000986320014_result" | split: "," %}
+{% assign special = "000986310012_result,000986320014_result" | split: "," %}
 
-{% assign normal_photos = "" | split: "" %}
-{% assign bottom_photos = "" | split: "" %}
+{% assign normal = "" | split: "" %}
+{% assign bottom = "" | split: "" %}
 
 {% for photo in photos %}
   {% assign is_special = false %}
-  {% for name in special_names %}
-    {% if photo.name contains name %}
+  {% for s in special %}
+    {% if photo.name contains s %}
       {% assign is_special = true %}
     {% endif %}
   {% endfor %}
 
   {% if is_special %}
-    {% assign bottom_photos = bottom_photos | push: photo %}
+    {% assign bottom = bottom | push: photo %}
   {% else %}
-    {% assign normal_photos = normal_photos | push: photo %}
+    {% assign normal = normal | push: photo %}
   {% endif %}
 {% endfor %}
 
-{% assign normal_photos = normal_photos | sort: "name" %}
+{% assign normal = normal | sort: "name" %}
+{% assign normal = normal | shuffle %}
 
-{% for photo in normal_photos %}
+{% for photo in normal %}
 <a href="{{ photo.path }}" data-lightbox="portfolio">
   <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
 </a>
 {% endfor %}
 
-{% for photo in bottom_photos %}
+{% for photo in bottom %}
 <a href="{{ photo.path }}" data-lightbox="portfolio">
   <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
 </a>
@@ -149,31 +165,30 @@ footer.hidden-copyright { display: none; }
 document.getElementById("y").textContent = new Date().getFullYear();
 
 const {
-  Engine, Render, World, Bodies, Body,
-  Mouse, MouseConstraint, Composite, Events
+  Engine, Render, World, Bodies,
+  Mouse, MouseConstraint
 } = Matter;
 
 const funBtn = document.getElementById("fun-btn");
-const staticGallery = document.getElementById("static-gallery");
-const physicsGallery = document.getElementById("physics-gallery");
+const gallery = document.getElementById("static-gallery");
+const physicsWrap = document.getElementById("physics-gallery");
+const footer = document.getElementById("footer");
 const header = document.getElementById("main-header");
 const mobileHeader = document.getElementById("mobile-header");
-const mobileReturn = document.getElementById("mobile-return-btn");
-const footer = document.getElementById("footer");
+const mobileReturn = document.getElementById("mobile-return");
 
 let engine, render;
 
 funBtn.onclick = startFun;
 mobileReturn.onclick = stopFun;
 
-function startFun(){
-  staticGallery.classList.add("hidden");
-  footer.classList.add("hidden-copyright");
-  funBtn.classList.add("hidden");
-  physicsGallery.style.display = "block";
+function startFun() {
+  gallery.classList.add("hidden");
+  footer.classList.add("hidden");
   header.classList.add("fun-mode");
+  physicsWrap.style.display = "block";
 
-  if(window.innerWidth <= 768){
+  if (window.innerWidth <= 768) {
     mobileHeader.classList.add("active");
   }
 
@@ -181,23 +196,21 @@ function startFun(){
   initPhysics();
 }
 
-function stopFun(){
-  Render.stop(render);
-  World.clear(engine.world);
-  Engine.clear(engine);
+function stopFun() {
+  Matter.Render.stop(render);
+  Matter.World.clear(engine.world);
+  Matter.Engine.clear(engine);
   render.canvas.remove();
 
-  physicsGallery.style.display = "none";
-  staticGallery.classList.remove("hidden");
-  footer.classList.remove("hidden-copyright");
-  funBtn.classList.remove("hidden");
+  physicsWrap.style.display = "none";
+  gallery.classList.remove("hidden");
+  footer.classList.remove("hidden");
   header.classList.remove("fun-mode");
   mobileHeader.classList.remove("active");
-
   document.body.style.overflow = "";
 }
 
-function initPhysics(){
+function initPhysics() {
   engine = Engine.create();
   engine.gravity.y = 0;
 
@@ -205,7 +218,7 @@ function initPhysics(){
   const h = window.innerHeight;
 
   render = Render.create({
-    element: physicsGallery,
+    element: physicsWrap,
     engine,
     options: {
       width: w,
@@ -219,21 +232,6 @@ function initPhysics(){
   Render.run(render);
   Engine.run(engine);
 
-  const mouse = Mouse.create(render.canvas);
-  mouse.pixelRatio = render.options.pixelRatio;
-
-  const mouseConstraint = MouseConstraint.create(engine, {
-    mouse,
-    constraint: {
-      stiffness: 0.9,
-      damping: 0.4,
-      render: { visible: false }
-    }
-  });
-
-  World.add(engine.world, mouseConstraint);
-  render.mouse = mouse;
-
   World.add(engine.world, [
     Bodies.rectangle(w/2, -50, w, 100, { isStatic:true }),
     Bodies.rectangle(w/2, h+50, w, 100, { isStatic:true }),
@@ -241,54 +239,45 @@ function initPhysics(){
     Bodies.rectangle(w+50, h/2, 100, h, { isStatic:true })
   ]);
 
-  const photos = [
+  const mouse = Mouse.create(render.canvas);
+  mouse.pixelRatio = render.options.pixelRatio;
+
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse,
+    constraint: {
+      stiffness: 0.9,
+      render: { visible: false }
+    }
+  });
+
+  World.add(engine.world, mouseConstraint);
+  render.mouse = mouse;
+
+  const images = [
   {% for photo in photos %}
-    {
-      thumb: "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
-      bottom: {% if photo.name contains "000986310012_result" or photo.name contains "000986320014_result" %}true{% else %}false{% endif %}
-    },
+    "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
   {% endfor %}
   ];
 
-  photos.forEach(p => {
-    const size = 90 + Math.random()*40;
-    const y = p.bottom ? h*0.8 + Math.random()*50 : Math.random()*h*0.6;
-
+  images.forEach(src => {
+    const size = 80 + Math.random() * 40;
     const body = Bodies.circle(
-      Math.random()*w,
-      y,
-      size/2,
+      Math.random() * w,
+      Math.random() * h,
+      size / 2,
       {
-        restitution: 0.9,
-        frictionAir: 0.08,
+        restitution: 0.95,
+        frictionAir: 0.02,
         render: {
           sprite: {
-            texture: p.thumb,
-            xScale: size/400,
-            yScale: size/400
+            texture: src,
+            xScale: size / 400,
+            yScale: size / 400
           }
         }
       }
     );
-
-    body.photo = true;
     World.add(engine.world, body);
-  });
-
-  Events.on(engine, "beforeUpdate", () => {
-    const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
-    bodies.forEach(a => {
-      bodies.forEach(b => {
-        if(a === b) return;
-        const dx = b.position.x - a.position.x;
-        const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx, dy);
-        if(dist > 0){
-          const f = 0.000008 / (dist*dist);
-          Body.applyForce(a, a.position, { x: dx/dist*f, y: dy/dist*f });
-        }
-      });
-    });
   });
 }
 </script>
