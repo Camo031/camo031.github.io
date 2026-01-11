@@ -66,6 +66,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 .gallery img {
   width: 100%;
   display: block;
+  transition: transform 0.5s ease;
 }
 
 @media (max-width: 768px) {
@@ -77,7 +78,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 
 #physics-gallery {
   position: fixed;
-  top: 120px;
+  top: 60px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -85,13 +86,13 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   z-index: 100;
 }
 
-#physics-gallery canvas {
-  pointer-events: auto !important;
+#physics-gallery img {
+  position: absolute;
+  user-select: none;
   cursor: grab;
-}
-
-#physics-gallery canvas:active {
-  cursor: grabbing;
+  pointer-events: auto;
+  will-change: transform;
+  transition: transform 0.6s ease;
 }
 
 #about-page {
@@ -133,11 +134,10 @@ footer {
   padding: 20px;
 }
 
-footer.hidden-copyright { display: none; }
-
 #fun-btn {
   font-size: 12px;
   cursor: pointer;
+  margin-bottom: 10px;
 }
 </style>
 </head>
@@ -233,30 +233,31 @@ bottom.forEach(el => gallery.appendChild(el));
 </script>
 
 <script>
-/* ---------- FUN MODE ---------- */
-const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Composite } = Matter;
-
+/* ---------- FUN MODE DOM VERSION w/ SMOOTH TRANSITION ---------- */
 const funBtn = document.getElementById("fun-btn");
 const returnBtn = document.getElementById("return-btn");
 const staticGallery = document.getElementById("static-gallery");
 const physicsGallery = document.getElementById("physics-gallery");
 
-let engine, render;
+let engine, renderBodies = [];
 
 funBtn.onclick = () => {
+  // hide grid
   staticGallery.classList.add("hidden");
   funBtn.classList.add("hidden");
   returnBtn.classList.remove("hidden");
   physicsGallery.style.display = "block";
   document.body.style.overflow = "hidden";
+
   initPhysics();
 };
 
 returnBtn.onclick = () => {
-  Render.stop(render);
-  World.clear(engine.world);
-  Engine.clear(engine);
-  render.canvas.remove();
+  renderBodies.forEach(b => b.element.remove());
+  renderBodies = [];
+  if (engine) Matter.World.clear(engine.world);
+  engine = null;
+
   physicsGallery.style.display = "none";
   staticGallery.classList.remove("hidden");
   funBtn.classList.remove("hidden");
@@ -265,79 +266,89 @@ returnBtn.onclick = () => {
 };
 
 function initPhysics() {
+  const { Engine, World, Bodies, Body, Events, Mouse, MouseConstraint } = Matter;
   engine = Engine.create();
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
   const h = window.innerHeight - document.querySelector("h1").offsetHeight;
 
-  render = Render.create({
-    element: physicsGallery,
-    engine,
-    options: {
-      width: w,
-      height: h,
-      background: "#000",
-      wireframes: false,
-      pixelRatio: window.devicePixelRatio
-    }
-  });
-
-  render.canvas.width = w;
-  render.canvas.height = h;
-
-  Render.run(render);
-  Engine.run(engine);
-
+  // Walls
   World.add(engine.world, [
-    Bodies.rectangle(w/2,-40,w,80,{isStatic:true}),
-    Bodies.rectangle(w/2,h+40,w,80,{isStatic:true}),
-    Bodies.rectangle(-40,h/2,80,h,{isStatic:true}),
-    Bodies.rectangle(w+40,h/2,80,h,{isStatic:true})
+    Bodies.rectangle(w/2,-50,w,100,{isStatic:true}),
+    Bodies.rectangle(w/2,h+50,w,100,{isStatic:true}),
+    Bodies.rectangle(-50,h/2,100,h,{isStatic:true}),
+    Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  const mouse = Mouse.create(render.canvas);
+  // For each grid image, create a physics image
+  const gridImages = document.querySelectorAll("#static-gallery img");
+
+  gridImages.forEach(img => {
+    const rect = img.getBoundingClientRect();
+    const size = 90 + Math.random() * 40;
+    const targetX = Math.random() * (w - size) + size/2;
+    const targetY = Math.random() * (h - size) + size/2;
+
+    // create DOM image in physics layer
+    const el = document.createElement("img");
+    el.src = img.src;
+    el.style.width = `${size}px`;
+    el.style.height = "auto";
+    el.style.left = `${rect.left}px`;
+    el.style.top = `${rect.top}px`;
+    physicsGallery.appendChild(el);
+
+    // Matter body
+    const body = Bodies.circle(rect.left + size/2, rect.top + size/2, size/2, {
+      restitution: 0.9,
+      frictionAir: 0.06
+    });
+    body.element = el;
+    renderBodies.push(body);
+    World.add(engine.world, body);
+
+    // Animate from grid to random start
+    setTimeout(() => {
+      el.style.transform = `translate(${targetX - rect.left}px, ${targetY - rect.top}px)`;
+      setTimeout(() => {
+        // After animation, remove transform and set position for physics
+        Body.setPosition(body, {x: targetX, y: targetY});
+        el.style.transition = "none";
+      }, 600);
+    }, 10);
+  });
+
+  // Mouse drag
+  const mouse = Mouse.create(physicsGallery);
   const mouseConstraint = MouseConstraint.create(engine,{
     mouse,
-    constraint:{ stiffness:0.8, render:{visible:false} }
+    constraint:{ stiffness:0.9, render:{visible:false} }
   });
-
   World.add(engine.world, mouseConstraint);
-  render.mouse = mouse;
 
-  document.querySelectorAll("#static-gallery img").forEach(img => {
-    const size = 90 + Math.random() * 40;
-    const body = Bodies.circle(
-      Math.random() * w,
-      Math.random() * h,
-      size / 2,
-      {
-        restitution: 0.9,
-        frictionAir: 0.06,
-        render: {
-          sprite: {
-            texture: img.src,
-            xScale: size / 400,
-            yScale: size / 400
-          }
-        }
-      }
-    );
-    body.photo = true;
-    World.add(engine.world, body);
-  });
+  // Update loop
+  (function update(){
+    requestAnimationFrame(update);
+    renderBodies.forEach(b => {
+      b.element.style.left = `${b.position.x - b.circleRadius}px`;
+      b.element.style.top = `${b.position.y - b.circleRadius}px`;
+    });
+    Engine.update(engine, 1000/60);
+  })();
 
+  // Attraction / drift
   Events.on(engine, "beforeUpdate", () => {
-    const bodies = Composite.allBodies(engine.world).filter(b => b.photo);
-    bodies.forEach(a => {
-      bodies.forEach(b => {
-        if (a === b) return;
+    renderBodies.forEach(a => {
+      renderBodies.forEach(b => {
+        if(a===b) return;
         const dx = b.position.x - a.position.x;
         const dy = b.position.y - a.position.y;
-        const d = Math.hypot(dx, dy) || 1;
-        const f = 0.000006 / (d * d);
-        Body.applyForce(a, a.position, { x: dx / d * f, y: dy / d * f });
+        const dist = Math.hypot(dx, dy) || 1;
+        const f = 0.000006 / (dist*dist);
+        Body.applyForce(a, a.position, {x: dx / dist * f, y: dy / dist * f});
       });
+      Body.applyForce(a, a.position, {x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
     });
   });
 }
