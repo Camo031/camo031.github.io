@@ -484,8 +484,8 @@ function initPhysics() {
   mouseConstraint = MouseConstraint.create(engine, {
     mouse,
     constraint: {
-      stiffness: 0.2,
-      damping: 0.15,
+      stiffness: 0.8,
+      damping: 0.3,
       render: { visible:false }
     }
   });
@@ -630,12 +630,13 @@ function initGlobe() {
   globeGroup = new THREE.Group();
   globeScene.add(globeGroup);
   
-  // Load and position photos on sphere
-  const photos = [
-  {% for photo in photos %}
-    "{{ photo.path | replace:'/photos/','/thumbnails/' }}",
-  {% endfor %}
-  ];
+  // Add ambient light
+  const light = new THREE.AmbientLight(0xffffff, 1);
+  globeScene.add(light);
+  
+  // Get photos from the static gallery
+  const galleryImages = document.querySelectorAll('#static-gallery img');
+  const photos = Array.from(galleryImages).map(img => img.src);
   
   const radius = 5;
   const textureLoader = new THREE.TextureLoader();
@@ -653,7 +654,10 @@ function initGlobe() {
     const z = Math.sin(theta) * radiusAtY;
     
     const texture = textureLoader.load(photos[i]);
-    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const material = new THREE.MeshBasicMaterial({ 
+      map: texture,
+      side: THREE.DoubleSide
+    });
     const geometry = new THREE.PlaneGeometry(0.8, 0.8);
     const mesh = new THREE.Mesh(geometry, material);
     
