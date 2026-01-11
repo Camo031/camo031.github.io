@@ -292,7 +292,7 @@ function initPhysics() {
 
   photos.forEach(p => {
     const current = Composite.allBodies(engine.world).filter(b => b.photo).length;
-    if (isMobile && current >= 10) return;
+    if (isMobile && current >= 30) return;
 
     const size = isMobile ? 50 + Math.random()*20 : 90 + Math.random()*40;
 
