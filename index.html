@@ -78,7 +78,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   bottom: 0;
   display: none;
   z-index: 100;
-  border: 1px solid #111; /* invisible border */
+  border: 1px solid #111;
 }
 
 #physics-gallery canvas {
@@ -283,7 +283,7 @@ const physicsGalleryEl = document.getElementById("physics-gallery");
 const funTopBar = document.getElementById("fun-top-bar");
 const funDesktopBtn = document.getElementById("fun-btn");
 const funMobileBtn = document.getElementById("fun-btn-mobile");
-let engine, render, world, bodies = [];
+let engine, render, world, bodies = [], runner;
 
 function startFunMode() {
   // Hide main page elements
@@ -311,15 +311,12 @@ function startFunMode() {
       width: w, 
       height: h, 
       wireframes: false, 
-      background: "#111",
-      pixelRatio: 1
+      background: "#111"
     }
   });
 
   Render.run(render);
-  
-  // Use Runner instead of Engine.run for better cross-browser compatibility
-  const runner = Runner.create();
+  runner = Runner.create();
   Runner.run(runner, engine);
 
   // Walls
@@ -330,16 +327,13 @@ function startFunMode() {
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  // Mouse - create after render is ready
+  // Mouse constraint
   const mouse = Mouse.create(render.canvas);
-  Mouse.setScale(mouse, { x: 1, y: 1 });
-  
   const mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
     constraint: { stiffness: 0.8, render:{visible:false} }
   });
   World.add(world, mouseConstraint);
-  render.mouse = mouse;
 
   // Load images
   let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
@@ -353,26 +347,42 @@ function startFunMode() {
     const x = Math.random()*(w-100)+50;
     const y = isBottom ? h*0.75 + Math.random()*(h*0.2) : Math.random()*(h*0.7);
 
+    // Give some initial velocity to random images
+    const hasInitialVelocity = Math.random() < 0.3;
+    const initialVelX = hasInitialVelocity ? (Math.random()-0.5)*4 : 0;
+    const initialVelY = hasInitialVelocity ? (Math.random()-0.5)*4 : 0;
+
     const body = Bodies.circle(x, y, size/2, {
       restitution: 0.9,
-      frictionAir: 0.06,
+      frictionAir: 0.02,
       render: { sprite: { texture: imgEl.src, xScale: size/400, yScale: size/400 } }
     });
+    
+    // Set initial velocity
+    Body.setVelocity(body, { x: initialVelX, y: initialVelY });
+    
     bodies.push(body);
     World.add(world, body);
   });
 
-  Events.on(engine,"beforeUpdate",()=>{
-    bodies.forEach(a=>{
-      bodies.forEach(b=>{
-        if(a===b) return;
+  // Physics update - gravitational attraction and ambient drift
+  Events.on(engine, "beforeUpdate", () => {
+    bodies.forEach(a => {
+      // Gravitational attraction between bodies
+      bodies.forEach(b => {
+        if(a === b) return;
         const dx = b.position.x - a.position.x;
         const dy = b.position.y - a.position.y;
-        const dist = Math.hypot(dx,dy)||1;
-        const f = 0.000006/(dist*dist);
-        Body.applyForce(a,a.position,{x:dx/dist*f, y:dy/dist*f});
+        const dist = Math.hypot(dx, dy) || 1;
+        const f = 0.000008 / (dist * dist);
+        Body.applyForce(a, a.position, {x: dx/dist*f, y: dy/dist*f});
       });
-      Body.applyForce(a,a.position,{x:(Math.random()-0.5)*0.00003, y:(Math.random()-0.5)*0.00003});
+      
+      // Ambient drift - gentle random movement
+      Body.applyForce(a, a.position, {
+        x: (Math.random()-0.5)*0.00004, 
+        y: (Math.random()-0.5)*0.00004
+      });
     });
   });
 }
@@ -389,7 +399,8 @@ funTopBar.onclick = () => {
   document.getElementById("main-header").style.display = "flex";
   document.getElementById("footer").style.display = "flex";
   
-  // Properly cleanup Matter.js
+  // Cleanup
+  if(runner) Runner.stop(runner);
   if(render) {
     Render.stop(render);
     render.canvas.remove();
