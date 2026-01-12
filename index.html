@@ -441,10 +441,10 @@ function startFunMode() {
         const dx = a.position.x - mousePos.x;
         const dy = a.position.y - mousePos.y;
         const dist = Math.hypot(dx, dy) || 1;
-        const repelRadius = 150;
+        const repelRadius = 200;
         
         if (dist < repelRadius) {
-          const force = 0.0008 * (1 - dist / repelRadius);
+          const force = 0.003 * (1 - dist / repelRadius);
           Body.applyForce(a, a.position, {
             x: (dx / dist) * force,
             y: (dy / dist) * force
