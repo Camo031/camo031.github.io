@@ -327,13 +327,22 @@ function startFunMode() {
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  // Mouse constraint
+  // Mouse constraint with explicit pixel ratio
   const mouse = Mouse.create(render.canvas);
+  mouse.pixelRatio = 1;
+  
   const mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
-    constraint: { stiffness: 0.8, render:{visible:false} }
+    constraint: { 
+      stiffness: 0.8, 
+      render: {visible: false}
+    }
   });
   World.add(world, mouseConstraint);
+  
+  // Prevent canvas scrolling on touch devices
+  render.canvas.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
+  render.canvas.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
 
   // Load images
   let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
@@ -391,6 +400,16 @@ funDesktopBtn.onclick = startFunMode;
 funMobileBtn.onclick = startFunMode;
 
 funTopBar.onclick = () => {
+  // Stop physics first
+  if(runner) Runner.stop(runner);
+  if(render) Render.stop(render);
+  if(engine) Engine.clear(engine);
+  if(world) World.clear(world);
+  
+  // Clear the physics container
+  physicsGalleryEl.innerHTML = "";
+  
+  // Reset display
   physicsGalleryEl.style.display = "none";
   gallery.classList.remove("hidden");
   funTopBar.style.display = "none";
@@ -398,24 +417,14 @@ funTopBar.onclick = () => {
   funMobileBtn.style.display = "inline-block";
   document.getElementById("main-header").style.display = "flex";
   document.getElementById("footer").style.display = "flex";
-  
-  // Cleanup
-  if(runner) Runner.stop(runner);
-  if(render) {
-    Render.stop(render);
-    render.canvas.remove();
-    render.canvas = null;
-    render.context = null;
-    render.textures = {};
-  }
-  if(engine) {
-    Matter.World.clear(world);
-    Matter.Engine.clear(engine);
-  }
-  
-  bodies = [];
-  physicsGalleryEl.innerHTML = "";
   document.body.style.overflow = "";
+  
+  // Clear variables
+  bodies = [];
+  engine = null;
+  render = null;
+  world = null;
+  runner = null;
 };
 </script>
 </body>
