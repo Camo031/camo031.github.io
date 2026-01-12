@@ -302,7 +302,7 @@ function startFunMode() {
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - funTopBar.offsetHeight;
+  const h = window.innerHeight - 60;
 
   render = Render.create({
     element: physicsGalleryEl,
@@ -327,10 +327,8 @@ function startFunMode() {
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  // Mouse constraint with explicit pixel ratio
+  // Mouse constraint - element needs to be the canvas
   const mouse = Mouse.create(render.canvas);
-  mouse.pixelRatio = 1;
-  
   const mouseConstraint = MouseConstraint.create(engine, {
     mouse: mouse,
     constraint: { 
@@ -339,10 +337,6 @@ function startFunMode() {
     }
   });
   World.add(world, mouseConstraint);
-  
-  // Prevent canvas scrolling on touch devices
-  render.canvas.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
-  render.canvas.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
 
   // Load images
   let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
@@ -400,16 +394,31 @@ funDesktopBtn.onclick = startFunMode;
 funMobileBtn.onclick = startFunMode;
 
 funTopBar.onclick = () => {
-  // Stop physics first
-  if(runner) Runner.stop(runner);
-  if(render) Render.stop(render);
-  if(engine) Engine.clear(engine);
-  if(world) World.clear(world);
+  // Clean up physics
+  if(runner) {
+    Runner.stop(runner);
+    runner = null;
+  }
+  if(render) {
+    Render.stop(render);
+    if(render.canvas && render.canvas.parentNode) {
+      render.canvas.parentNode.removeChild(render.canvas);
+    }
+    render = null;
+  }
+  if(world) {
+    Matter.World.clear(world, false);
+    world = null;
+  }
+  if(engine) {
+    Matter.Engine.clear(engine);
+    engine = null;
+  }
   
-  // Clear the physics container
+  bodies = [];
   physicsGalleryEl.innerHTML = "";
   
-  // Reset display
+  // Show normal page
   physicsGalleryEl.style.display = "none";
   gallery.classList.remove("hidden");
   funTopBar.style.display = "none";
@@ -418,13 +427,6 @@ funTopBar.onclick = () => {
   document.getElementById("main-header").style.display = "flex";
   document.getElementById("footer").style.display = "flex";
   document.body.style.overflow = "";
-  
-  // Clear variables
-  bodies = [];
-  engine = null;
-  render = null;
-  world = null;
-  runner = null;
 };
 </script>
 </body>
