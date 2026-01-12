@@ -60,11 +60,17 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   margin: 0 auto;
 }
 
-.gallery a { display: block; width: 100%; break-inside: avoid; }
+.gallery a { 
+  display: block; 
+  width: 100%; 
+  break-inside: avoid;
+  pointer-events: none;
+}
 .gallery img { 
   width: 100%; 
   display: block; 
   transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  pointer-events: auto;
 }
 .gallery img:hover {
   transform: scale(1.03);
