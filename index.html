@@ -287,22 +287,9 @@ gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
 
-/* ---------- IMAGE PROTECTION (ONLY CHANGE) ---------- */
-document.querySelectorAll('#static-gallery a').forEach(link => {
-  const img = link.querySelector('img');
-
-  link.addEventListener('contextmenu', e => e.preventDefault());
+// Disable right-click on images
+document.querySelectorAll('.gallery img').forEach(img => {
   img.addEventListener('contextmenu', e => e.preventDefault());
-
-  link.dataset.realHref = link.getAttribute('href');
-
-  link.addEventListener('mouseenter', () => {
-    link.removeAttribute('href');
-  });
-
-  link.addEventListener('mouseleave', () => {
-    link.setAttribute('href', link.dataset.realHref);
-  });
 });
 
 /* ---------- Contact fade ---------- */
