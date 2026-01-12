@@ -71,10 +71,15 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
   user-select: none;
   -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.gallery a {
+  pointer-events: auto;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .gallery img:hover {
+  .gallery a:hover img {
     transform: scale(1.03);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   }
