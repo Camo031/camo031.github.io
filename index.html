@@ -88,10 +88,8 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   width: 100% !important;
   height: 100% !important;
   pointer-events: auto;
-  cursor: grab;
+  cursor: crosshair;
 }
-
-#physics-gallery canvas:active { cursor: grabbing; }
 
 #fun-top-bar {
   display: none;
@@ -108,6 +106,7 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   color: #bbb;
   font-family: Arial, sans-serif;
   transition: color 0.2s ease;
+  user-select: none;
 }
 #fun-top-bar:hover { color: #fff; }
 
@@ -283,9 +282,61 @@ const physicsGalleryEl = document.getElementById("physics-gallery");
 const funTopBar = document.getElementById("fun-top-bar");
 const funDesktopBtn = document.getElementById("fun-btn");
 const funMobileBtn = document.getElementById("fun-btn-mobile");
-let engine, render, world, bodies = [], runner;
+let engine, render, world, bodies = [], runner, isRunning = false;
+let mousePos = { x: -1000, y: -1000 };
+
+function exitFunMode() {
+  if (!isRunning) return;
+  
+  isRunning = false;
+  
+  // Stop the runner and render
+  if (runner) {
+    Matter.Runner.stop(runner);
+  }
+  if (render) {
+    Matter.Render.stop(render);
+  }
+  
+  // Clear the world
+  if (world) {
+    Matter.World.clear(world, false);
+  }
+  
+  // Clear the engine
+  if (engine) {
+    Matter.Engine.clear(engine);
+  }
+  
+  // Remove canvas
+  const canvas = physicsGalleryEl.querySelector('canvas');
+  if (canvas) {
+    canvas.remove();
+  }
+  
+  // Reset variables
+  bodies = [];
+  engine = null;
+  render = null;
+  world = null;
+  runner = null;
+  
+  // Show normal page
+  physicsGalleryEl.style.display = "none";
+  gallery.classList.remove("hidden");
+  funTopBar.style.display = "none";
+  funDesktopBtn.style.display = "inline-block";
+  funMobileBtn.style.display = "inline-block";
+  document.getElementById("main-header").style.display = "flex";
+  document.getElementById("footer").style.display = "flex";
+  document.body.style.overflow = "";
+}
 
 function startFunMode() {
+  if (isRunning) return;
+  
+  isRunning = true;
+  
   // Hide main page elements
   gallery.classList.add("hidden");
   funTopBar.style.display = "block";
@@ -296,13 +347,13 @@ function startFunMode() {
   document.getElementById("footer").style.display = "none";
   document.body.style.overflow = "hidden";
 
-  const { Engine, Render, World, Bodies, Body, Events, Mouse, MouseConstraint, Runner } = Matter;
+  const { Engine, Render, World, Bodies, Body, Events, Runner } = Matter;
   engine = Engine.create();
   world = engine.world;
   engine.gravity.y = 0;
 
   const w = window.innerWidth;
-  const h = window.innerHeight - funTopBar.offsetHeight;
+  const h = window.innerHeight - 60;
 
   render = Render.create({
     element: physicsGalleryEl,
@@ -327,22 +378,31 @@ function startFunMode() {
     Bodies.rectangle(w+50,h/2,100,h,{isStatic:true})
   ]);
 
-  // Mouse constraint with explicit pixel ratio
-  const mouse = Mouse.create(render.canvas);
-  mouse.pixelRatio = 1;
-  
-  const mouseConstraint = MouseConstraint.create(engine, {
-    mouse: mouse,
-    constraint: { 
-      stiffness: 0.8, 
-      render: {visible: false}
-    }
+  // Track mouse position
+  render.canvas.addEventListener('mousemove', (e) => {
+    const rect = render.canvas.getBoundingClientRect();
+    mousePos.x = e.clientX - rect.left;
+    mousePos.y = e.clientY - rect.top;
   });
-  World.add(world, mouseConstraint);
   
-  // Prevent canvas scrolling on touch devices
-  render.canvas.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
-  render.canvas.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
+  render.canvas.addEventListener('mouseleave', () => {
+    mousePos.x = -1000;
+    mousePos.y = -1000;
+  });
+  
+  // Touch support
+  render.canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const rect = render.canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    mousePos.x = touch.clientX - rect.left;
+    mousePos.y = touch.clientY - rect.top;
+  }, { passive: false });
+  
+  render.canvas.addEventListener('touchend', () => {
+    mousePos.x = -1000;
+    mousePos.y = -1000;
+  });
 
   // Load images
   let imgElements = Array.from(document.querySelectorAll("#static-gallery img"));
@@ -367,16 +427,31 @@ function startFunMode() {
       render: { sprite: { texture: imgEl.src, xScale: size/400, yScale: size/400 } }
     });
     
-    // Set initial velocity
     Body.setVelocity(body, { x: initialVelX, y: initialVelY });
     
     bodies.push(body);
     World.add(world, body);
   });
 
-  // Physics update - gravitational attraction and ambient drift
+  // Physics update - gravitational attraction, ambient drift, and mouse repulsion
   Events.on(engine, "beforeUpdate", () => {
     bodies.forEach(a => {
+      // Mouse repulsion
+      if (mousePos.x > -500) {
+        const dx = a.position.x - mousePos.x;
+        const dy = a.position.y - mousePos.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const repelRadius = 250;
+        
+        if (dist < repelRadius) {
+          const force = 0.15 * (1 - dist / repelRadius);
+          Body.applyForce(a, a.position, {
+            x: (dx / dist) * force,
+            y: (dy / dist) * force
+          });
+        }
+      }
+      
       // Gravitational attraction between bodies
       bodies.forEach(b => {
         if(a === b) return;
@@ -387,7 +462,7 @@ function startFunMode() {
         Body.applyForce(a, a.position, {x: dx/dist*f, y: dy/dist*f});
       });
       
-      // Ambient drift - gentle random movement
+      // Ambient drift
       Body.applyForce(a, a.position, {
         x: (Math.random()-0.5)*0.00004, 
         y: (Math.random()-0.5)*0.00004
@@ -396,36 +471,9 @@ function startFunMode() {
   });
 }
 
-funDesktopBtn.onclick = startFunMode;
-funMobileBtn.onclick = startFunMode;
-
-funTopBar.onclick = () => {
-  // Stop physics first
-  if(runner) Runner.stop(runner);
-  if(render) Render.stop(render);
-  if(engine) Engine.clear(engine);
-  if(world) World.clear(world);
-  
-  // Clear the physics container
-  physicsGalleryEl.innerHTML = "";
-  
-  // Reset display
-  physicsGalleryEl.style.display = "none";
-  gallery.classList.remove("hidden");
-  funTopBar.style.display = "none";
-  funDesktopBtn.style.display = "inline-block";
-  funMobileBtn.style.display = "inline-block";
-  document.getElementById("main-header").style.display = "flex";
-  document.getElementById("footer").style.display = "flex";
-  document.body.style.overflow = "";
-  
-  // Clear variables
-  bodies = [];
-  engine = null;
-  render = null;
-  world = null;
-  runner = null;
-};
+funDesktopBtn.addEventListener('click', startFunMode);
+funMobileBtn.addEventListener('click', startFunMode);
+funTopBar.addEventListener('click', exitFunMode);
 </script>
 </body>
 </html>
