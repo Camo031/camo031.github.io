@@ -287,10 +287,8 @@ gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
 
-// Disable right-click on images
-document.querySelectorAll('.gallery img').forEach(img => {
-  img.addEventListener('contextmenu', e => e.preventDefault());
-});
+// Disable right-click on entire page
+document.addEventListener('contextmenu', e => e.preventDefault());
 
 /* ---------- Contact fade ---------- */
 const contactBtn = document.getElementById("contact-button");
