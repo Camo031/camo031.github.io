@@ -61,7 +61,15 @@ h1 a:hover, #return-btn:hover { color: #fff; }
 }
 
 .gallery a { display: block; width: 100%; break-inside: avoid; }
-.gallery img { width: 100%; display: block; }
+.gallery img { 
+  width: 100%; 
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
 
 @media (max-width: 768px) {
   h1 { font-size: 32px; }
@@ -208,7 +216,7 @@ footer .copyright-line {
 {% assign photos = site.static_files | where_exp:"f","f.path contains '/photos/'" %}
 {% for photo in photos %}
   <a href="{{ photo.path }}" data-lightbox="portfolio" data-name="{{ photo.name }}">
-    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}">
+    <img src="{{ photo.path | replace:'/photos/','/thumbnails/' }}" draggable="false">
   </a>
 {% endfor %}
 </div>
@@ -246,6 +254,14 @@ const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
 aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow = "hidden"; };
 aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow = ""; };
+
+/* ---------- Disable right-click on images ---------- */
+document.addEventListener('contextmenu', function(e) {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    return false;
+  }
+});
 
 /* ---------- Random order + bottom images ---------- */
 const gallery = document.getElementById("static-gallery");
