@@ -64,13 +64,20 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   display: block; 
   width: 100%; 
   break-inside: avoid;
-  pointer-events: none;
 }
 .gallery img { 
   width: 100%; 
   display: block; 
   transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
-  pointer-events: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gallery img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
 }
 .gallery img:hover {
   transform: scale(1.03);
@@ -279,6 +286,11 @@ bottom.sort(() => Math.random()-0.5);
 gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
+
+// Disable right-click on images
+document.querySelectorAll('.gallery img').forEach(img => {
+  img.addEventListener('contextmenu', e => e.preventDefault());
+});
 
 /* ---------- Contact fade ---------- */
 const contactBtn = document.getElementById("contact-button");
