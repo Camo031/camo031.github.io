@@ -60,17 +60,11 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   margin: 0 auto;
 }
 
-.gallery a { 
-  display: block; 
-  width: 100%; 
-  break-inside: avoid;
-  pointer-events: none;
-}
+.gallery a { display: block; width: 100%; break-inside: avoid; }
 .gallery img { 
   width: 100%; 
   display: block; 
   transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
-  pointer-events: auto;
 }
 .gallery img:hover {
   transform: scale(1.03);
@@ -280,15 +274,6 @@ gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-// Disable right-click on entire page
-document.addEventListener('contextmenu', e => e.preventDefault());
-
-=======
->>>>>>> parent of 733a8e2 (Update index.html)
-=======
->>>>>>> parent of 733a8e2 (Update index.html)
 /* ---------- Contact fade ---------- */
 const contactBtn = document.getElementById("contact-button");
 const contactEmail = document.getElementById("contact-email");
@@ -464,10 +449,10 @@ function startFunMode() {
         const dx = a.position.x - mousePos.x;
         const dy = a.position.y - mousePos.y;
         const dist = Math.hypot(dx, dy) || 1;
-        const repelRadius = 200;
+        const repelRadius = 250;
         
         if (dist < repelRadius) {
-          const force = 0.003 * (1 - dist / repelRadius);
+          const force = 0.15 * (1 - dist / repelRadius);
           Body.applyForce(a, a.position, {
             x: (dx / dist) * force,
             y: (dy / dist) * force
