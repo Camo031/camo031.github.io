@@ -66,6 +66,9 @@ h1 a:hover, #return-btn:hover { color: #fff; }
   width: 100%; 
   display: block; 
   transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
 }
 .gallery img:hover {
   transform: scale(1.03);
@@ -231,7 +234,7 @@ footer .copyright-line {
 <div id="about-page">
   <div id="about-return">return</div>
   <div id="about-text">
-    film photographer shooting 35mm on a Canon A-1 and a Praktica LB<span id="asterisk" style="cursor: pointer;">*</span><span id="disposable-text" style="opacity: 0; width: 0; display: inline-block; overflow: hidden; transition: opacity 0.5s ease, width 0.5s ease; vertical-align: baseline;"><sup style="white-space: nowrap;">(and sometimes on a disposable)</sup></span> in the Pacific Northwest
+    film photographer shooting 35mm on a Canon A-1 and a Praktica LB<span id="asterisk" style="cursor: pointer;">*</span><span id="disposable-text" style="opacity: 0; width: 0; display: inline-block; overflow: hidden; transition: opacity 0.5s ease, width 0.5s ease; vertical-align: baseline;"><sup style="white-space: nowrap; font-size: 14px;">(and sometimes on a disposable)</sup></span> in the Pacific Northwest
   </div>
 </div>
 
@@ -258,7 +261,15 @@ const aboutLink = document.getElementById("about-link");
 const aboutPage = document.getElementById("about-page");
 const aboutReturn = document.getElementById("about-return");
 aboutLink.onclick = () => { aboutPage.classList.add("active"); document.body.style.overflow = "hidden"; };
-aboutReturn.onclick = () => { aboutPage.classList.remove("active"); document.body.style.overflow = ""; };
+aboutReturn.onclick = () => { 
+  aboutPage.classList.remove("active"); 
+  document.body.style.overflow = ""; 
+  // Reset asterisk state
+  asterisk.style.opacity = 1;
+  asterisk.style.display = "inline";
+  disposableText.style.opacity = 0;
+  disposableText.style.width = 0;
+};
 
 /* ---------- Asterisk interaction ---------- */
 const asterisk = document.getElementById("asterisk");
@@ -290,6 +301,14 @@ bottom.sort(() => Math.random()-0.5);
 gallery.innerHTML = "";
 normal.forEach(el => gallery.appendChild(el));
 bottom.forEach(el => gallery.appendChild(el));
+
+/* ---------- Disable right-click on images ---------- */
+document.querySelectorAll('.gallery img').forEach(img => {
+  img.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    return false;
+  });
+});
 
 /* ---------- Contact fade ---------- */
 const contactBtn = document.getElementById("contact-button");
