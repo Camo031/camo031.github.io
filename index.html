@@ -231,7 +231,7 @@ footer .copyright-line {
 <div id="about-page">
   <div id="about-return">return</div>
   <div id="about-text">
-    film photographer shooting 35mm on a Canon A-1 and a Praktica LB<span id="asterisk" style="cursor: pointer;">*</span><span id="disposable-text" style="opacity: 0; transition: opacity 0.5s ease;"><sup>(and sometimes on a disposable)</sup></span> in the Pacific Northwest
+    film photographer shooting 35mm on a Canon A-1 and a Praktica LB<span id="asterisk" style="cursor: pointer;">*</span><span id="disposable-text" style="opacity: 0; width: 0; display: inline-block; overflow: hidden; transition: opacity 0.5s ease, width 0.5s ease; vertical-align: baseline;"><sup style="white-space: nowrap;">(and sometimes on a disposable)</sup></span> in the Pacific Northwest
   </div>
 </div>
 
@@ -268,6 +268,7 @@ asterisk.onclick = () => {
   setTimeout(() => {
     asterisk.style.display = "none";
     disposableText.style.opacity = 1;
+    disposableText.style.width = "auto";
   }, 500);
 };
 
